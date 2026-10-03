@@ -26,7 +26,8 @@ The offline foundation below is implemented. Gameplay milestones remain pending;
 - [x] Verify walkable ramp seams and steep-surface support rejection offline.
 - [x] Add cached static-mesh bounds indexing and unfiltered parity checks.
 - [x] Add bounded shallow-overlap recovery, grounded stair descent and passive ground friction with offline regression fixtures.
-- [ ] Broaden stair/slope/seam coverage and implement coupled contact friction and moving surfaces.
+- [x] Add a translating support-platform prototype with carry, jump inheritance and blocked-carry regression checks.
+- [ ] Broaden stair/slope/seam coverage and implement coupled friction, rotating platforms and continuous moving-surface collision.
 - [ ] Benchmark full map geometry and integrate dynamic geometry updates.
 - [ ] Validate Rust/BeamNG transport and connect movement to avatar, camera and animations.
 - [ ] Verify stock map collision and moving platforms in BeamNG.

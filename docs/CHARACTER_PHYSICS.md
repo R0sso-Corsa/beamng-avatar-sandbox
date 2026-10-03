@@ -91,7 +91,7 @@ The offline obstacle course is a four-second corridor/low-ceiling scenario with 
 
 `Character::step_mesh` creates local tangent contacts for the AVBD step and guards the resulting translation using the mesh sweep. This final movement guard is kinematic, not an AVBD constraint-force solve. Position-derived velocity and mesh support are updated after sliding. Queries are transactional: errors preserve the previous character state. The API uses stable unique triangle IDs and rejects degenerate/nonfinite triangles. Raw slice queries scan every triangle. `StaticMesh` now validates geometry once and caches a median-split bounding-volume tree for nearby candidate selection.
 
-`mesh_course` walks into a freestanding box, moves sideways and passes around it on a finite floor, with assertions and CSV output. Thirteen unit tests cover the combined core. This does not establish full map navigation: moving surfaces, coupled solver friction and broader seam/slope validation remain pending. Tangent planes are local approximations for one fixed step; large meshes and adversarial geometry have not been validated. No BeamNG tests have been run.
+`mesh_course` walks into a freestanding box, moves sideways and passes around it on a finite floor, with assertions and CSV output. Fourteen unit tests cover the combined core. This does not establish full map navigation: moving surfaces, coupled solver friction and broader seam/slope validation remain pending. Tangent planes are local approximations for one fixed step; large meshes and adversarial geometry have not been validated. No BeamNG tests have been run.
 
 ## Stairs, slope support and indexed geometry
 
@@ -113,3 +113,14 @@ Passive ground friction estimates the gravity/support impulse before the contact
 New regression fixtures cover shallow floor/wall recovery, rejection without mutation beyond the recovery budget, a grounded 15 cm descent versus a falling 65 cm drop, passive holding on a 20-degree ramp, sliding slowdown on a flat floor and unchanged airborne motion. These results are offline only.
 
 The three-riser example now runs for two seconds (480 fixed steps) to include settling with the downward ground probe. It still asserts completion, final tread height and grounding; its traversal timing is not calibrated to Roblox.
+
+
+### Translating support-platform prototype
+
+`Character::step_translating_platform` takes static triangles, one platform's previous-pose triangles and its displacement over one fixed step. Hosts must advance those platform vertices by the same displacement after success and keep triangle IDs unique across both sets. Start at rest on the platform and establish grounding with a mesh step first. Grounded character velocity is relative to its carrier; render displacement includes carrier motion. On jumping or walking off, the departure step adds carrier velocity (`displacement / DT`) to airborne velocity for subsequent integration. No force reaction is applied to the platform.
+
+Carry is swept against static obstacles; a blocked carry returns an error with the original character unchanged. Hosts must stop or resolve the platform movement when that happens. Invalid inputs and duplicate IDs also fail without mutation. An unsupported avatar overlapping the platform's final pose is rejected rather than pushed out.
+
+This is a translating carrier prototype, not general dynamic collision: platform motion is prescribed, rotation is unsupported, and a fast platform crossing an airborne avatar between endpoint poses can be missed. Repeated landing/attachment transitions and mixed overlapping supports need further validation. The adapter scans raw triangle slices and does not update the static BVH. It is not ready for moving BeamNG vehicles.
+
+The offline regression checks one second of simultaneous horizontal/upward carry, jump velocity inheritance without ground snap, walking off a finite deck, blocked carry rollback, nonfinite displacement and duplicate IDs. Fourteen unit tests pass; no BeamNG moving-platform or Roblox comparison test has been run.
