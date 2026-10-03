@@ -48,3 +48,5 @@ See [ROADMAP.md](ROADMAP.md) for milestones and acceptance checks.
 - [BeamNG TSStatic objects](https://documentation.beamng.com/modding/levels/level_classes/tsstatic/)
 - [Example walking-mode character mod](https://www.beamng.com/threads/mita-miside-unicycle-mod.102090/)
 - [Roblox avatar creation API](https://create.roblox.com/docs/reference/engine/classes/Players)
+
+The Rust core also provides a versioned C interface for other game adapters. See [cross-game support](docs/CROSS_GAME_SUPPORT.md) for build instructions, the C host check and current limits.
