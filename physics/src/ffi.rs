@@ -20,6 +20,91 @@ pub struct AvatarTriangle {
     pub id: u64,
     pub vertices: [[f64; 3]; 3],
 }
+/// Frozen ABI-v1 profile layout. All lengths/speeds use metres/seconds.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct AvatarProfileV1 {
+    pub metres_per_stud: f64,
+    pub gravity: f64,
+    pub walk_speed: f64,
+    pub jump_speed: f64,
+    pub ground_acceleration: f64,
+    pub air_acceleration: f64,
+    pub mass: f64,
+    pub radius: f64,
+    pub height: f64,
+    pub max_slope_degrees: f64,
+    pub step_height: f64,
+    pub recovery_distance: f64,
+    pub static_friction: f64,
+    pub dynamic_friction: f64,
+}
+impl From<Profile> for AvatarProfileV1 {
+    fn from(p: Profile) -> Self {
+        Self {
+            metres_per_stud: p.metres_per_stud,
+            gravity: p.gravity,
+            walk_speed: p.walk_speed,
+            jump_speed: p.jump_speed,
+            ground_acceleration: p.ground_acceleration,
+            air_acceleration: p.air_acceleration,
+            mass: p.mass,
+            radius: p.radius,
+            height: p.height,
+            max_slope_degrees: p.max_slope_degrees,
+            step_height: p.step_height,
+            recovery_distance: p.recovery_distance,
+            static_friction: p.static_friction,
+            dynamic_friction: p.dynamic_friction,
+        }
+    }
+}
+impl From<AvatarProfileV1> for Profile {
+    fn from(p: AvatarProfileV1) -> Self {
+        Self {
+            metres_per_stud: p.metres_per_stud,
+            gravity: p.gravity,
+            walk_speed: p.walk_speed,
+            jump_speed: p.jump_speed,
+            ground_acceleration: p.ground_acceleration,
+            air_acceleration: p.air_acceleration,
+            mass: p.mass,
+            radius: p.radius,
+            height: p.height,
+            max_slope_degrees: p.max_slope_degrees,
+            step_height: p.step_height,
+            recovery_distance: p.recovery_distance,
+            static_friction: p.static_friction,
+            dynamic_friction: p.dynamic_friction,
+        }
+    }
+}
+/// # Safety
+/// out must point to an aligned writable AvatarProfileV1.
+#[no_mangle]
+pub unsafe extern "C" fn avatar_default_profile_v1(out: *mut AvatarProfileV1) -> i32 {
+    if out.is_null() {
+        return -2;
+    }
+    unsafe {
+        out.write(Profile::default().into());
+    }
+    0
+}
+/// # Safety
+/// profile must point to an aligned readable AvatarProfileV1 throughout this call.
+#[no_mangle]
+pub unsafe extern "C" fn avatar_create_with_profile_v1(
+    profile: *const AvatarProfileV1,
+    x: f64,
+    y: f64,
+    z: f64,
+) -> u64 {
+    if profile.is_null() {
+        return 0;
+    }
+    create(unsafe { profile.read() }.into(), [x, y, z])
+}
 struct Instance {
     character: Character,
     mesh: StaticMesh,
@@ -40,7 +125,10 @@ pub extern "C" fn avatar_abi_version() -> u32 {
 }
 #[no_mangle]
 pub extern "C" fn avatar_create(x: f64, y: f64, z: f64) -> u64 {
-    let Ok(character) = Character::new(Profile::default(), [x, y, z]) else {
+    create(Profile::default(), [x, y, z])
+}
+fn create(profile: Profile, position: [f64; 3]) -> u64 {
+    let Ok(character) = Character::new(profile, position) else {
         return 0;
     };
     let Ok(mut r) = registry().lock() else {

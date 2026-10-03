@@ -18,6 +18,19 @@ int main(void) {
     assert(!state.grounded && state.velocity[2] > 15);
     assert(avatar_destroy(avatar) == 0);
     assert(avatar_step(avatar, 0, 0, 0) == -1);
+    AvatarProfileV1 profile;
+    assert(avatar_default_profile_v1(&profile) == 0);
+    profile.walk_speed = 2;
+    avatar = avatar_create_with_profile_v1(&profile, 0, 0, 0.7651);
+    assert(avatar && avatar_set_mesh(avatar, &floor, 1) == 0);
+    for (int i = 0; i < 240; ++i) assert(avatar_step(avatar, 1, 0, 0) == 0);
+    assert(avatar_get_state(avatar, &state) == 0);
+    assert(state.position[0] > 1.9 && state.position[0] < 2.01);
+    assert(avatar_destroy(avatar) == 0);
+    profile.radius = -1;
+    assert(avatar_create_with_profile_v1(&profile, 0, 0, 1) == 0);
+    assert(avatar_create_with_profile_v1(NULL, 0, 0, 1) == 0);
+    assert(avatar_default_profile_v1(NULL) == -2);
     puts("C host: walking, grounding, jump and lifecycle passed");
     return 0;
 }
