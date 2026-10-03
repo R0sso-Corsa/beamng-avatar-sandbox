@@ -4,13 +4,14 @@ import math
 import argparse
 import base64
 import shutil
+import struct
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'assets/source/noob_r6'
 # Metres; X right, Y back, Z up. Standing on Z=0, facing -Y.
 PARTS = [
     ('Torso', 'blue', (0, 0, .9), (.6, .3, .6)),
-    ('Head', 'yellow', (0, 0, 1.35), (.6, .3, .3)),
+    ('Head', 'yellow', (0, 0, 1.35), (.375, .375, .3)),
     ('LeftArm', 'yellow', (.45, 0, .9), (.3, .3, .6)),
     ('RightArm', 'yellow', (-.45, 0, .9), (.3, .3, .6)),
     ('LeftLeg', 'green', (.15, 0, .3), (.3, .3, .6)),
@@ -25,8 +26,11 @@ def main():
     out = ROOT / 'assets/private/noob_r6' if args.face_texture else OUT
     if args.face_texture:
         texture = args.face_texture.read_bytes()
-        if not texture.startswith(b'\x89PNG\r\n\x1a\n'):
+        if len(texture) < 24 or not texture.startswith(b'\x89PNG\r\n\x1a\n') or texture[12:16] != b'IHDR':
             parser.error('Face texture must be a PNG')
+        width, height = struct.unpack('>II', texture[16:24])
+        if not width or not height:
+            parser.error('Face texture dimensions must be positive')
     out.mkdir(parents=True, exist_ok=True)
     if args.face_texture:
         shutil.copyfile(args.face_texture, out / 'face.png')
@@ -49,24 +53,61 @@ def main():
         lines.extend(['o ' + name, 'g ' + name])
         vertices = [tuple(centre[i] + corner[i]*size[i]/2 for i in range(3))
                     for corner in corners]
-        mesh(vertices, faces, material)
+        if name != 'Head':
+            mesh(vertices, faces, material)
         if name == 'Head':
+            # Classic-style cylinder with softly rounded rims, not a sphere.
+            segments = 64
+            rim = .035
+            rings = []
+            for centre_z, start in [(1.2+rim, -math.pi/2), (1.5-rim, 0)]:
+                for j in range(7):
+                    angle = start+j*math.pi/12
+                    rings.append((centre_z+rim*math.sin(angle),
+                                  .1875-rim+rim*math.cos(angle)))
+            head_vertices = [(r*math.cos(i*math.tau/segments),
+                              r*math.sin(i*math.tau/segments), z)
+                             for z,r in rings for i in range(segments)]
+            head_faces = [tuple(reversed(range(segments))),
+                          tuple(range((len(rings)-1)*segments,len(rings)*segments))]
+            for j in range(len(rings)-1):
+                for i in range(segments):
+                    k = (i+1) % segments
+                    head_faces.append((j*segments+i,j*segments+k,
+                                       (j+1)*segments+k,(j+1)*segments+i))
+            lines.append('s 1')
+            mesh(head_vertices, head_faces, material)
+            lines.append('s off')
             if args.face_texture:
-                # Transparent decal panel, outward normal -Y; follows Head.
-                lines.extend(['usemtl roblox_face',
-                              'vt 0 0', 'vt 1 0', 'vt 1 1', 'vt 0 1'])
-                panel = [(-.3,-.151,1.2),(.3,-.151,1.2),
-                         (.3,-.151,1.5),(-.3,-.151,1.5)]
+                # Preserve the image's aspect ratio in front projection. Curved
+                # strips follow the cylinder without stretching it across Head.
+                scale = .25 / max(width, height)
+                face_width, face_height = width*scale, height*scale
+                strips = 32
+                lines.append('usemtl roblox_face')
+                panel = []
+                for i in range(strips+1):
+                    x = face_width*(i/strips-.5)
+                    y = -math.sqrt(.1875**2-x*x)-.002
+                    for v in (0,1):
+                        panel.append((x,y,1.35+face_height*(v-.5)))
+                        lines.append(f'vt {i/strips:.6f} {v}')
                 lines.extend('v ' + ' '.join(f'{v:.6f}' for v in point) for point in panel)
-                lines.append('f ' + ' '.join(f'{count+i+1}/{i+1}' for i in range(4)))
-                count += 4
+                for i in range(strips):
+                    indices = (2*i,2*i+2,2*i+3,2*i+1)
+                    lines.append('f ' + ' '.join(f'{count+j+1}/{j+1}' for j in indices))
+                count += len(panel)
                 continue
             # Original smile geometry, grouped with Head so it follows the head.
             for x in (-.105, .105):
-                ring = [(x+.022*math.cos(a), -.151, 1.39+.031*math.sin(a))
+                ring = [(x+.022*math.cos(a),
+                         -math.sqrt(.1875**2-(x+.022*math.cos(a))**2)-.002,
+                         1.39+.031*math.sin(a))
                         for a in (i*math.tau/12 for i in range(12))]
                 mesh(ring, [tuple(range(12))], 'face')
-            outer = [(-.12+.24*i/12, -.151, 1.285+.055*((i-6)/6)**2)
+            outer = [(-.12+.24*i/12,
+                      -math.sqrt(.1875**2-(-.12+.24*i/12)**2)-.002,
+                      1.285+.055*((i-6)/6)**2)
                      for i in range(13)]
             inner = [(x,y,z+.014) for x,y,z in outer]
             mesh(outer+inner, [(i,i+1,i+14,i+13) for i in range(12)], 'face')
@@ -84,15 +125,16 @@ def main():
     svg = ['<svg xmlns="http://www.w3.org/2000/svg" width="640" height="720" viewBox="0 0 640 720">',
            '<rect width="640" height="720" fill="#18202b"/>',
            '<text x="320" y="62" text-anchor="middle" fill="white" font-family="sans-serif" font-size="25">R6-style noob test character</text>']
-    for _, material, centre, size in PARTS:
+    for name, material, centre, size in PARTS:
         x = 320+(centre[0]-size[0]/2)*360
         y = 630-(centre[2]+size[2]/2)*360
         rgb = colours[material]
         colour = '#'+''.join(f'{round(v*255):02x}' for v in rgb)
-        svg.append(f'<rect x="{x}" y="{y}" width="{size[0]*360}" height="{size[2]*360}" fill="{colour}" stroke="#18202b" stroke-width="2"/>')
+        rounding = ' rx="13.5"' if name == 'Head' else ''
+        svg.append(f'<rect x="{x}" y="{y}" width="{size[0]*360}" height="{size[2]*360}"{rounding} fill="{colour}" stroke="#18202b" stroke-width="2"/>')
     if args.face_texture:
         data = base64.b64encode(texture).decode('ascii')
-        svg.append(f'<image x="212" y="90" width="216" height="108" preserveAspectRatio="none" href="data:image/png;base64,{data}"/>')
+        svg.append(f'<image x="{320-face_width*180}" y="{144-face_height*180}" width="{face_width*360}" height="{face_height*360}" preserveAspectRatio="xMidYMid meet" href="data:image/png;base64,{data}"/>')
     else:
         svg.extend(['<g fill="#060606"><ellipse cx="282.2" cy="129.6" rx="7.92" ry="11.16"/><ellipse cx="357.8" cy="129.6" rx="7.92" ry="11.16"/></g>',
                     '<path d="M276.8 147.6 Q320 187.2 363.2 147.6" fill="none" stroke="#060606" stroke-width="5"/>'])
