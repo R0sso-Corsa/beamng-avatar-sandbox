@@ -8,3 +8,5 @@ exports/
 !.env.example
 dist/
 __pycache__/
+target/
+trajectory.csv
