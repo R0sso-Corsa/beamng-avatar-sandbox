@@ -56,20 +56,28 @@ def main():
         if name != 'Head':
             mesh(vertices, faces, material)
         if name == 'Head':
-            # Classic-style cylinder with bevelled rims, not a sphere.
+            # Classic-style cylinder with softly rounded rims, not a sphere.
             segments = 64
-            rings = [(1.2, .15), (1.225, .1875), (1.475, .1875), (1.5, .15)]
+            rim = .035
+            rings = []
+            for centre_z, start in [(1.2+rim, -math.pi/2), (1.5-rim, 0)]:
+                for j in range(7):
+                    angle = start+j*math.pi/12
+                    rings.append((centre_z+rim*math.sin(angle),
+                                  .1875-rim+rim*math.cos(angle)))
             head_vertices = [(r*math.cos(i*math.tau/segments),
                               r*math.sin(i*math.tau/segments), z)
                              for z,r in rings for i in range(segments)]
             head_faces = [tuple(reversed(range(segments))),
-                          tuple(range(3*segments,4*segments))]
-            for j in range(3):
+                          tuple(range((len(rings)-1)*segments,len(rings)*segments))]
+            for j in range(len(rings)-1):
                 for i in range(segments):
                     k = (i+1) % segments
                     head_faces.append((j*segments+i,j*segments+k,
                                        (j+1)*segments+k,(j+1)*segments+i))
+            lines.append('s 1')
             mesh(head_vertices, head_faces, material)
+            lines.append('s off')
             if args.face_texture:
                 # Preserve the image's aspect ratio in front projection. Curved
                 # strips follow the cylinder without stretching it across Head.
