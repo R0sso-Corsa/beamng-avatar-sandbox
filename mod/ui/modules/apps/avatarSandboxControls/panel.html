@@ -1,0 +1,23 @@
+<div style="height:100%;overflow:auto;background:rgba(20,24,30,.94);color:white;padding:12px;box-sizing:border-box;font-family:sans-serif" ng-mouseleave="release()">
+  <strong>Avatar Sandbox</strong>
+  <p>Mod: {{state.mod.enabled ? 'enabled' : 'disabled'}} · Character: {{state.mod.characterMode}}</p>
+  <button ng-click="send('toggleMod')">Enable / disable mod</button>
+  <p><button ng-click="send('beamng')">Normal BeamNG</button> <button ng-click="send('roblox')" ng-disabled="!state.mod.enabled">Roblox character</button></p>
+  <p ng-if="!state.mod.avatarActive">Avatar adapter inactive — gameplay takeover is pending.</p>
+  <button ng-click="send('building')">Building tools: {{state.building.enabled ? 'on' : 'off'}}</button>
+  <button ng-click="send('interact')" ng-disabled="!state.mod.enabled">Interact</button>
+  <fieldset ng-disabled="!state.mod.avatarActive || !state.driver.attached" style="margin-top:12px">
+    <legend>Hold to move</legend>
+    <button ng-mousedown="press('forward')" ng-mouseup="release()">Forward</button>
+    <button ng-mousedown="press('backward')" ng-mouseup="release()">Back</button>
+    <button ng-mousedown="press('left')" ng-mouseup="release()">Left</button>
+    <button ng-mousedown="press('right')" ng-mouseup="release()">Right</button>
+    <button ng-mousedown="press('jump')" ng-mouseup="release()">Jump</button>
+  </fieldset>
+  <p>Camera orbit/zoom: host bindings pending.</p>
+  <p>Local errors: {{state.telemetry.errorCount}} · Dropped simulation time: {{state.driver.droppedSeconds || 0 | number:3}} s</p>
+  <div ng-repeat="entry in state.telemetry.events | limitTo:-3 track by entry.sequence">{{entry.level}}: {{entry.component}} — {{entry.message}}</div>
+  <p><button ng-click="makeReport()">Prepare debug report</button> <button ng-click="send('clearTelemetry')">Clear history</button></p>
+  <textarea ng-if="report" readonly ng-model="report" aria-label="Local debug report; select and copy" style="width:100%;height:120px"></textarea>
+  <small>Local only. No automatic upload. Add this panel through UI Apps.</small>
+</div>
