@@ -25,3 +25,13 @@ placement.onClientEndMission(); assert(placement.status().count==0)
 assert(not placement.remove(id))
 """)
 print('Placement snapping, overlap, isolation, removal and cleanup passed')
+
+building = lua.execute((root / 'mod/lua/ge/extensions/avatarSandbox/buildingTools.lua').read_text())
+assert building.status()['enabled'] is False
+assert building.remove(1)[0] is False
+lua.globals().extensions = lua.table(avatarSandbox_placement=lua.globals().placement)
+assert building.setEnabled(True) is True
+assert building.status()['enabled'] is True
+building.onClientEndMission()
+assert building.status()['enabled'] is False
+print('Building-tools opt-in and reset passed')
