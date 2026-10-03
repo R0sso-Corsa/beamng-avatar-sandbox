@@ -27,6 +27,26 @@ typedef struct {
     double static_friction;
     double dynamic_friction;
 } AvatarProfileV1;
+typedef struct {
+    double position[3]; double forward[3]; uint32_t first_person;
+    double heading; double requested_distance; double actual_distance;
+} AvatarCameraPoseV1;
+int32_t avatar_camera_active_v1(uint64_t handle, uint32_t active);
+int32_t avatar_camera_look_v1(uint64_t handle, double yaw_delta, double pitch_delta);
+int32_t avatar_camera_zoom_v1(uint64_t handle, double wheel_steps);
+/* obstruction=-1 means clear; otherwise safe boom fraction [0,1]. */
+int32_t avatar_camera_pose_v1(uint64_t handle, const double focus[3], const double eye[3],
+    double obstruction, AvatarCameraPoseV1 *out);
+typedef struct { double min[3]; double max[3]; } AvatarBoundsV1;
+int32_t avatar_building_enabled_v1(uint64_t handle, uint32_t enabled);
+int32_t avatar_building_clear_v1(uint64_t handle);
+/* operations: 0 place (centre), 1 move (offset), 2 resize (size), 3 clone
+   (offset), 4 remove (value/player pointers still required, unused).
+   Output ID is written on success only. Bounds are conservative world AABBs. */
+int32_t avatar_building_edit_v1(uint64_t handle, uint32_t operation, uint64_t id,
+    const double value[3], const AvatarBoundsV1 *player, const AvatarBoundsV1 *vehicles,
+    uint32_t count, uint64_t *out_id);
+int32_t avatar_building_get_v1(uint64_t handle, uint64_t id, AvatarBoundsV1 *out);
 uint32_t avatar_abi_version(void);
 int32_t avatar_default_profile_v1(AvatarProfileV1 *out);
 uint64_t avatar_create_with_profile_v1(const AvatarProfileV1 *profile, double x, double y, double z);

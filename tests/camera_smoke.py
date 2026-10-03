@@ -6,18 +6,15 @@ lua=LuaRuntime(unpack_returned_tuples=True)
 lua.globals().cameraModule=lua.execute((root/'mod/lua/ge/extensions/avatarSandbox/camera.lua').read_text())
 lua.globals().main=lua.execute((root/'mod/lua/ge/extensions/avatarSandbox/main.lua').read_text())
 lua.execute("""
-local c=cameraModule.new()
-local focus={x=0,y=0,z=1}; local eye={x=0,y=0,z=1.4}
-assert(not c.pose(focus,eye)); assert(c.setActive(true))
-assert(c.pose(focus,eye).position.y==-3)
-assert(c.zoom(-6)); local p=assert(c.pose(focus,eye))
-assert(p.firstPerson and p.hideLocalHead and p.position.z==eye.z)
-assert(c.zoom(1)); assert(not c.pose(focus,eye).firstPerson)
-assert(c.zoom(100)); assert(c.status().distance==15)
-assert(c.look(math.pi/2,100)); assert(c.status().pitch<=math.rad(80))
-local blocked=assert(c.pose(focus,eye,0.2)); assert(blocked.actualDistance<3)
-assert(c.status().distance==15) -- obstruction doesn't change user zoom
-assert(not c.pose(focus,eye,-1)); assert(not c.zoom(0/0))
+assert(not cameraModule.new())
+local active=false; local forwarded=0
+local c=assert(cameraModule.new({
+ setActive=function(value) active=value; return true end,
+ look=function(y,p) forwarded=forwarded+1; assert(y==1 and p==2); return true end,
+ zoom=function(n) forwarded=forwarded+1; assert(n==-6); return true end,
+ pose=function(f,e,h) forwarded=forwarded+1; return {firstPerson=true} end
+}))
+assert(c.look(1,2)); assert(c.zoom(-6)); assert(c.pose({},{}).firstPerson); assert(forwarded==3)
 assert(main.status().characterMode=='beamng')
 assert(not main.setCharacterMode('roblox')); assert(main.setEnabled(true))
 assert(main.setCharacterMode('roblox')); assert(not main.status().avatarActive)
@@ -27,7 +24,7 @@ assert(main.attachCharacterAdapter({enter=function() enter=enter+1; c.setActive(
  leave=function() leave=leave+1; c.setActive(false); return true end}))
 assert(main.setCharacterMode('roblox')); assert(main.status().avatarActive)
 assert(main.setCharacterMode('roblox')); assert(enter==1)
-assert(main.setEnabled(false)); assert(leave==1 and not c.status().active)
+assert(main.setEnabled(false)); assert(leave==1 and not active)
 assert(main.status().characterMode=='beamng')
 assert(main.setEnabled(true)); assert(main.setCharacterMode('roblox'))
 main.onClientEndMission(); assert(leave==2 and main.status().characterMode=='beamng')

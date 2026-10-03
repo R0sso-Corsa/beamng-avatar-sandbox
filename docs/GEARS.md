@@ -1,3 +1,5 @@
+> Portability update: camera and building-plan logic now live in Rust (`physics/src/camera.rs`, `physics/src/building.rs`) and are exposed through the C ABI. Lua camera/building/placement files are backend facades and cannot run standalone. Earlier Lua implementation descriptions below are historical; engine integration remains pending.
+
 # Portable Doomspire-inspired gear foundation
 
 The [Doomspire Brickbattle Tools wiki](https://doomspire-brickbattle.fandom.com/wiki/Tools) lists Sword, Slingshot, Rocket Launcher, Trowel, Bomb, Superball and Paintball Gun. `physics/src/gear.rs` supplies all seven as an independently implemented Rust inventory/command system. No Roblox scripts or gear assets are included. Hosts supply collision, projectile motion, damage, destruction, sounds, animations and rendering; these are commands, not working BeamNG weapons.

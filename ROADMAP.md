@@ -150,3 +150,12 @@ See [avatar import and multiplayer delivery](docs/AVATAR_IMPORT.md) for the sour
 - [ ] Verify stock gameplay remains available with the mod enabled and Roblox character mode switched off.
 
 Requirement: users can choose the Roblox character or the typical BeamNG experience without uninstalling or disabling the mod. Camera and avatar takeover only occur in Roblox character mode; they must be restored when leaving it.
+
+## Rust portability consolidation
+
+- [x] Move camera orbit/zoom/first-person behavior into Rust and expose the C camera interface.
+- [x] Move block planning, overlap validation, move/resize/clone/remove into Rust and expose C edit/query operations.
+- [x] Replace Lua camera/building implementations with backend facades; verify with Rust, external C and Lua mock checks.
+- [ ] Move remaining reusable input scheduling and avatar catalogue validation from Lua prototypes into Rust.
+- [ ] Expose gear transport and building preview in the C API.
+- [ ] Supply supported game adapters for camera, controls, geometry and rendering.

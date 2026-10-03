@@ -1,3 +1,5 @@
+> Portability update: camera and building-plan logic now live in Rust (`physics/src/camera.rs`, `physics/src/building.rs`) and are exposed through the C ABI. Lua camera/building/placement files are backend facades and cannot run standalone. Earlier Lua implementation descriptions below are historical; engine integration remains pending.
+
 # Character choice and Classic-inspired camera
 
 The mod's enabled state and character choice are separate. `avatarSandbox_main.setCharacterMode("roblox")` selects Roblox mode only while the mod is enabled; `"beamng"` selects the typical BeamNG experience. The manually bindable character-mode action switches the choice. Enabling the mod does not automatically select an avatar. Default choice is BeamNG. Disable and mission exit return the choice to BeamNG.
