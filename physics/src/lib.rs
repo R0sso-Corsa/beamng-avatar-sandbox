@@ -1,6 +1,7 @@
 //! Engine-neutral, Z-up, metre/second character prototype.
 //! AVBD subset: one translational body against static, frictionless planes.
-//! No collision detection, rigid rotation, ragdolls, or host-engine calls.
+//! Static triangle collision lives in mesh; no rotation, ragdolls or host calls.
+pub mod mesh;
 
 pub type Vec3 = [f64; 3];
 fn dot(a: Vec3, b: Vec3) -> f64 {
@@ -105,6 +106,7 @@ const BETA: f64 = 1.0e7;
 const MAX_PENALTY: f64 = 1.0e10;
 const MARGIN: f64 = 0.002;
 
+#[derive(Clone)]
 pub struct Character {
     profile: Profile,
     state: State,

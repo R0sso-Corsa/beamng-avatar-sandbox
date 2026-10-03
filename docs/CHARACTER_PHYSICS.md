@@ -29,7 +29,7 @@ Do not change BeamNG's global gravity to match Roblox. The avatar core applies i
 
 [AVBD, Giles/Diaz/Yuksel (2025)](https://graphics.cs.utah.edu/research/projects/avbd/) adds augmented-Lagrangian dual updates to vertex/body block solves. The implemented subset uses the paper's inertial target, bounded contact forces, Hessian rescaling, stabilization, dual/penalty updates and warm starting (Eqs. 2, 11–14, 18–19). A 3×3 LDLᵀ solve updates one translational body; its plane constraints have zero geometric Hessian. [8]
 
-This is **not the complete AVBD rigid-body engine**. It omits rotation, articulated joints, deformables, Coulomb friction, collision detection, GPU scheduling and adaptive initialization. It uses an inertial-target initial guess. The gameplay motor and jump launch sit outside the contact solver. Outward normals give nonpositive duals, the opposite sign convention to the paper's contact example. Initial error stabilization applies only to penetration, avoiding attraction to separated surfaces. Numerical parameters are project tuning, not claims about Roblox internals.
+This is **not the complete AVBD rigid-body engine**. The AVBD solver omits rotation, articulated joints, deformables, Coulomb friction, GPU scheduling and adaptive initialization. Static triangle collision is now handled by a separate mesh adapter. It uses an inertial-target initial guess. The gameplay motor and jump launch sit outside the contact solver. Outward normals give nonpositive duals, the opposite sign convention to the paper's contact example. Initial error stabilization applies only to penetration, avoiding attraction to separated surfaces. Numerical parameters are project tuning, not claims about Roblox internals.
 
 An independent implementation was written from the equations; no reference source is bundled. The [author's reference solver](https://github.com/savant117/avbd-demo3d/blob/main/source/solver.cpp) was inspected for sequencing and conventions. [9]
 
@@ -49,6 +49,7 @@ From repository root:
 cargo test --manifest-path physics/Cargo.toml
 cargo run --manifest-path physics/Cargo.toml --example trajectory > trajectory.csv
 cargo run --manifest-path physics/Cargo.toml --example obstacle_course > course.csv
+cargo run --manifest-path physics/Cargo.toml --example mesh_course > mesh_course.csv
 ```
 
 `physics/src/lib.rs` is a dependency-free Rust library. `Character::step` advances exactly 1/240 second. Input is world-space XY; Z is up. Analog magnitude is preserved and diagonal speed is capped. Jump triggers on a press edge while supported, with no automatic repeat, coyote time or jump buffering.
@@ -82,3 +83,11 @@ Before BeamNG playability: verify a supported Rust loading/IPC mechanism on the 
 11. [2010 Rust Rewrite Mashup](https://github.com/chasmlol/2010-rust-rewrite-mashup)
 
 The offline obstacle course is a four-second corridor/low-ceiling scenario with clearance assertions and CSV output. It uses infinite half-spaces; finite obstacles, stairs and map-mesh navigation remain pending.
+
+## Finite mesh prototype
+
+`physics/src/mesh.rs` adds two-sided triangle queries using capsule-segment to filled-triangle distance, including face, edge and vertex regions. Conservative advancement limits translation by clearance/path length, with a 0.1 mm skin and 256-iteration budget. Sweep-and-slide retains contact normals at corners and allows five blocking contacts per move. Exhaustion or initial penetration returns an error, not an unchecked movement.
+
+`Character::step_mesh` creates local tangent contacts for the AVBD step and guards the resulting translation using the mesh sweep. This final movement guard is kinematic, not an AVBD constraint-force solve. Position-derived velocity and mesh support are updated after sliding. Queries are transactional: errors preserve the previous character state. The API uses stable unique triangle IDs and rejects degenerate/nonfinite triangles. It scans every triangle; a spatial acceleration structure is required for map-scale use.
+
+`mesh_course` walks into a freestanding box, moves sideways and passes around it on a finite floor, with assertions and CSV output. Seven unit tests cover the combined core. This does not establish full map navigation: stairs, depenetration, moving surfaces, friction and robust seam/slope tuning remain pending. Tangent planes are local approximations for one fixed step; large meshes and adversarial geometry have not been validated. No BeamNG tests have been run.
