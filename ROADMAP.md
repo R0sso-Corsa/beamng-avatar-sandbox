@@ -125,3 +125,6 @@ See [block placement](docs/BLOCK_PLACEMENT.md) for the offline planner and remai
 - [ ] Verify gear behavior and building tools in BeamNG.
 
 See [gear scope and defaults](docs/GEARS.md).
+
+- [x] Base optional building tools on F3X-style editing; add offline move, symmetric resize and clone with overlap rollback.
+- [ ] Add selection UI, rotation, appearance tools and undo/redo, then validate engine edits.
