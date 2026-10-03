@@ -1,5 +1,8 @@
 //! Finite floor and freestanding box: approach, move sideways, pass the box.
-use avatar_physics::{mesh::Triangle, Character, Input, Profile, DT};
+use avatar_physics::{
+    mesh::{StaticMesh, Triangle},
+    Character, Input, Profile, DT,
+};
 fn quad(mesh: &mut Vec<Triangle>, a: [f64; 3], b: [f64; 3], c: [f64; 3], d: [f64; 3]) {
     for vertices in [[a, b, c], [a, c, d]] {
         mesh.push(Triangle {
@@ -36,6 +39,7 @@ fn main() {
     ] {
         quad(&mut mesh, face[0], face[1], face[2], face[3]);
     }
+    let mesh = StaticMesh::new(mesh).unwrap();
     let p = Profile::default();
     let mut avatar = Character::new(p, [0.0, 0.0, p.height / 2.0 + 0.0001]).unwrap();
     println!("time,x,y,feet_z,grounded");
@@ -48,7 +52,7 @@ fn main() {
             [1.0, 0.0]
         };
         let s = avatar
-            .step_mesh(
+            .step_static_mesh(
                 Input {
                     movement,
                     jump: false,

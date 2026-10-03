@@ -22,7 +22,11 @@ The offline foundation below is implemented. Gameplay milestones remain pending;
 - [x] Add an offline corridor/ceiling obstacle course with clearance assertions.
 - [x] Add finite triangle face/edge/vertex queries and conservative capsule sweeps.
 - [x] Add sweep-and-slide and an offline freestanding-box mesh course.
-- [ ] Add stairs, slope/seam tuning, depenetration, friction and a map-scale broadphase.
+- [x] Add prototype swept stair climbing with ceiling/height checks.
+- [x] Verify walkable ramp seams and steep-surface support rejection offline.
+- [x] Add cached static-mesh bounds indexing and unfiltered parity checks.
+- [ ] Broaden stair/slope/seam coverage; add depenetration and friction.
+- [ ] Benchmark full map geometry and integrate dynamic geometry updates.
 - [ ] Validate Rust/BeamNG transport and connect movement to avatar, camera and animations.
 - [ ] Verify stock map collision and moving platforms in BeamNG.
 - [ ] Add full rotational/articulated AVBD and vehicle coupling when required.
