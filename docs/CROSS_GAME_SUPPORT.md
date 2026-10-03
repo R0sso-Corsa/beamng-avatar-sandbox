@@ -12,7 +12,7 @@ The dependency-free Rust core now builds as `rlib`, `cdylib` and `staticlib`. A 
 - Call `avatar_get_state` for position, velocity and grounded state. Drive the visible avatar, camera and animation in the host; this library performs no rendering or host-engine calls.
 - Return codes: 0 success, -1 unknown handle, -2 invalid input or failed physics step, -3 unavailable registry. Failed steps preserve state. Invalid/stale handles are rejected. Pointer validity is the caller's responsibility: nonnull pointers alone do not prove memory is readable/writable. Never pass untrusted raw addresses.
 
-The C ABI supports default or custom profiles and static mesh stepping. Obtain `AvatarProfileV1` defaults with `avatar_default_profile_v1`, adjust fields and create with `avatar_create_with_profile_v1`. Invalid profiles return a zero handle. Existing instances are not modified; recreate to change profile settings. The frozen v1 layout matches the header. `metres_per_stud` is metadata: changing it does not automatically rescale other fields or uploaded geometry. The translating-platform adapter remains Rust-only. ABI v1 does not expose per-game gravity changes, articulated AVBD, vehicle forces or networking. All instances serialize through one mutex; benchmark before using many avatars. Allocation failure is not a recoverable ABI error. Calls must finish before unloading the library.
+The C ABI supports default or custom profiles and static mesh stepping. Obtain `AvatarProfileV1` defaults with `avatar_default_profile_v1`, adjust fields and create with `avatar_create_with_profile_v1`. Invalid profiles return a zero handle. Existing instances are not modified; recreate to change profile settings. The frozen v1 layout matches the header. `metres_per_stud` is metadata: changing it does not automatically rescale other fields or uploaded geometry. The translating-platform prototype is also exposed through `avatar_step_platform_v1`; see the contract below. ABI v1 does not expose per-game gravity changes, articulated AVBD, vehicle forces or networking. All instances serialize through one mutex; benchmark before using many avatars. Allocation failure is not a recoverable ABI error. Calls must finish before unloading the library.
 
 ## Runnable C host check
 
@@ -36,6 +36,17 @@ The check actually links against the built library and asserts walking, groundin
 
 Each game still needs a supported native plugin/loading route, input mapping, mesh extraction, unit/axis conversion, fixed-step scheduling and avatar rendering. For a source-controlled Rust game, using the Rust crate directly is simpler. For C/C++ hosts, the header/library boundary provides reuse. Managed-language hosts can bind this ABI, but their calling convention and struct layout must match the header. No native BeamNG loading path or other engine binding has been verified here.
 
-Next: expose platform state across the ABI, validate a small host scene on another OS, and establish BeamNG's supported integration route before connecting gameplay. The same simulation can be shared across games; assets, host collision APIs, camera and animations remain game-specific.
+Next: validate a small host scene on another OS, and establish BeamNG's supported integration route before connecting gameplay. The same simulation can be shared across games; assets, host collision APIs, camera and animations remain game-specific.
 
 BeamNG-specific feasibility and the read-only runtime inventory are documented in [BeamNG integration](BEAMNG_INTEGRATION.md). Historical developer guidance indicates custom DLL loading is sandboxed; the C ABI does not by itself resolve that restriction.
+
+
+## Translating platform call
+
+`avatar_step_platform_v1` replaces the ordinary step for a frame containing one translating platform. It uses the uploaded mesh as static geometry, and a caller-owned triangle array describing the platform at its previous pose. Supply its displacement over exactly 1/240 second. Keep IDs unique across the static and platform sets. A null platform pointer is permitted only with zero count; pointer validity remains the host's responsibility.
+
+Establish grounding at the initial pose with a zero-displacement platform step before carrying the avatar. After each successful call, advance the host's platform vertices and render pose by the same displacement. On failure both character and uploaded static mesh are unchanged, and the host must stop or resolve the platform motion. Never upload the same platform as static geometry too. The platform input is copied for that call and is not stored for subsequent ordinary steps.
+
+Grounded velocity excludes carrier motion; departing avatars inherit the carrier velocity for subsequent steps. This remains the prescribed translation prototype: no rotating platforms, reaction forces or continuous collision with moving geometry. Fast platforms can cross an unsupported avatar between endpoint poses. Repeated attachment transitions still need validation. Platform stepping scans raw geometry and does not use the cached static-mesh broad phase, so keep scenes small until benchmarked.
+
+The external C check now exercises simultaneous horizontal/upward carry, jump inheritance, null input, nonfinite displacement, conflicting IDs, rollback and destroyed handles. It passes on macOS; BeamNG and Windows/Linux runtime integration are still unverified.
