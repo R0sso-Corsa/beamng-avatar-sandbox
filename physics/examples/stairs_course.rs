@@ -42,7 +42,7 @@ fn main() {
     let p = Profile::default();
     let mut avatar = Character::new(p, [0.0, 0.0, p.height / 2.0 + 0.0001]).unwrap();
     println!("time,x,feet_z,grounded");
-    for i in 0..230 {
+    for i in 0..480 {
         let s = avatar
             .step_static_mesh(
                 Input {

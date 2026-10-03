@@ -471,7 +471,8 @@ impl Character {
                 return Err("capsule starts overlapping mesh");
             }
             if gap < 0.002 && walkable(*t, normal, slope) {
-                mesh_supported |= trial.state.velocity[2] <= 0.1;
+                mesh_supported |=
+                    dot(normal, trial.state.velocity) <= 0.1 || trial.state.velocity[2] <= 0.1;
                 if normal[2] >= slope {
                     planes.push(Plane {
                         id: t.id,

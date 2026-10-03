@@ -111,3 +111,5 @@ Shallow mesh overlaps are corrected along the deepest contact normal before step
 Passive ground friction estimates the gravity/support impulse before the contact solve. Static friction holds a resting avatar; dynamic friction reduces tangential sliding speed. The movement motor overrides this friction while walking. Coefficients are provisional, uniform character settings, not measured Roblox constants or per-material BeamNG values. This is a controller approximation, not coupled AVBD Coulomb friction rows.
 
 New regression fixtures cover shallow floor/wall recovery, rejection without mutation beyond the recovery budget, a grounded 15 cm descent versus a falling 65 cm drop, passive holding on a 20-degree ramp, sliding slowdown on a flat floor and unchanged airborne motion. These results are offline only.
+
+The three-riser example now runs for two seconds (480 fixed steps) to include settling with the downward ground probe. It still asserts completion, final tread height and grounding; its traversal timing is not calibrated to Roblox.
