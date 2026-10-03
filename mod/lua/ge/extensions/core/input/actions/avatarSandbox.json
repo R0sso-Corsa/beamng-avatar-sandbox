@@ -54,5 +54,13 @@
     "onChange": "if avatarSandbox_driver then avatarSandbox_driver.setControl('jump', VALUE) end",
     "title": "Avatar Sandbox: jump",
     "desc": "Feeds the experimental physics driver when an adapter is attached. Bind manually; in-game verification pending."
+  },
+  "avatarSandbox_buildingTools": {
+    "cat": "menuExtra",
+    "order": 910,
+    "ctx": "tlua",
+    "onDown": "extensions.load('avatarSandbox_buildingTools'); avatarSandbox_buildingTools.toggle()",
+    "title": "Avatar Sandbox: toggle building tools",
+    "desc": "Opt in to the experimental building-tools planner. Runtime block creation is pending."
   }
 }
