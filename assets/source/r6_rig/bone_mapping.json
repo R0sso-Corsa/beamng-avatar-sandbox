@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "sha256": "e5278356ca0d17d13a4552b4729e0f8d6440816e11f0f40e4eb47685dea24921",
+  "sourceCoordinates": "glTF Y-up; preserve ancestor transforms",
+  "parts": {
+    "Torso": {
+      "node": 6,
+      "name": "Torso_00",
+      "parentNode": 5,
+      "localBind": {
+        "rotation": [
+          0.7071068286895752,
+          0.0,
+          0.0,
+          0.7071067094802856
+        ]
+      }
+    },
+    "Head": {
+      "node": 7,
+      "name": "Head_01",
+      "parentNode": 6,
+      "localBind": {
+        "translation": [
+          0.0,
+          2.0,
+          0.0
+        ]
+      }
+    },
+    "LeftArm": {
+      "node": 9,
+      "name": "Left Arm_02",
+      "parentNode": 6,
+      "localBind": {
+        "translation": [
+          1.0,
+          2.0,
+          0.0
+        ],
+        "rotation": [
+          0.7822998762130737,
+          0.09630578756332397,
+          -0.6108013987541199,
+          0.07519311457872391
+        ],
+        "scale": [
+          1.0000028610229492,
+          1.0000001192092896,
+          1.0
+        ]
+      }
+    },
+    "RightArm": {
+      "node": 11,
+      "name": "Right Arm_03",
+      "parentNode": 6,
+      "localBind": {
+        "translation": [
+          -1.0,
+          2.0,
+          0.0
+        ],
+        "rotation": [
+          -0.6108012795448303,
+          0.07519304752349854,
+          0.7822998762130737,
+          0.09630525857210159
+        ],
+        "scale": [
+          1.0000028610229492,
+          1.0000001192092896,
+          1.0
+        ]
+      }
+    },
+    "LeftLeg": {
+      "node": 13,
+      "name": "Left Leg_04",
+      "parentNode": 6,
+      "localBind": {
+        "translation": [
+          0.5,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.7071068286895752,
+          -3.0908619663705394e-08,
+          -0.7071067690849304,
+          -3.0908619663705394e-08
+        ],
+        "scale": [
+          1.0,
+          0.9999999403953552,
+          1.0
+        ]
+      }
+    },
+    "RightLeg": {
+      "node": 15,
+      "name": "Right Leg_05",
+      "parentNode": 6,
+      "localBind": {
+        "translation": [
+          -0.5,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.7071068286895752,
+          -3.0908619663705394e-08,
+          -0.7071067690849304,
+          -3.0908619663705394e-08
+        ],
+        "scale": [
+          1.0,
+          0.9999999403953552,
+          1.0
+        ]
+      }
+    }
+  },
+  "skinJointCount": 12,
+  "animationCount": 0,
+  "status": "Joint names and hierarchy verified; weights and deformation not yet verified"
+}

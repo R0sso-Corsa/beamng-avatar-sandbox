@@ -170,3 +170,13 @@ Requirement: users can choose the Roblox character or the typical BeamNG experie
 - [ ] Route future Rust/engine adapter failures into telemetry and add camera bindings.
 
 See [telemetry and controls](docs/TELEMETRY_AND_CONTROLS.md).
+
+## Original R6 animation import
+
+- [x] Inspect supplied Sketchfab rig and record six-part bone mapping and bind transforms.
+- [x] Prepare Studio exporter for R6 joint offsets, keyframe poses, easing and loop metadata.
+- [ ] Run exporter in Studio and import accessible original R6 clips locally.
+- [ ] Verify rest frames, skin weights and limb deformation against Studio.
+- [ ] Implement Rust clip sampling/blending and host pose application.
+
+See [rig mapping and export workflow](assets/source/r6_rig/README.md). No original clips have been imported or applied yet.
