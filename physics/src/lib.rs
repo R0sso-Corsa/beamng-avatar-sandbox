@@ -12,6 +12,24 @@ fn add(a: Vec3, b: Vec3) -> Vec3 {
 fn scale(a: Vec3, s: f64) -> Vec3 {
     a.map(|v| v * s)
 }
+fn extent(p: Profile, normal: Vec3) -> f64 {
+    p.radius + normal[2].abs() * (p.height / 2.0 - p.radius)
+}
+
+/// Exact continuous sweep of an upright capsule against one infinite plane.
+/// Returns fraction in [0,1], or None when the segment stays outside.
+/// Preconditions: valid profile, finite endpoints, unit plane normal.
+pub fn sweep_plane(profile: Profile, from: Vec3, to: Vec3, plane: Plane) -> Option<f64> {
+    let a = dot(plane.normal, from) - plane.offset - extent(profile, plane.normal);
+    let b = dot(plane.normal, to) - plane.offset - extent(profile, plane.normal);
+    if a < 0.0 {
+        Some(0.0)
+    } else if b < 0.0 {
+        Some(a / (a - b))
+    } else {
+        None
+    }
+}
 fn finite(v: Vec3) -> bool {
     v.iter().all(|v| v.is_finite())
 }
@@ -27,6 +45,8 @@ pub struct Profile {
     pub air_acceleration: f64,
     pub mass: f64,
     pub radius: f64,
+    /// Total upright capsule height, including both rounded caps.
+    pub height: f64,
     pub max_slope_degrees: f64,
 }
 impl Default for Profile {
@@ -41,12 +61,13 @@ impl Default for Profile {
             air_acceleration: 20.0,
             mass: 60.0,
             radius: 0.30,
+            height: 1.53,
             max_slope_degrees: 45.0,
         }
     }
 }
 
-/// One supporting half-space: dot(normal, centre) >= offset + radius.
+/// One supporting half-space: dot(normal, centre) >= offset + radius + abs(normal.z) * (height/2 - radius).
 /// Supply all relevant planes before stepping. IDs must uniquely and stably
 /// identify unchanged world surfaces; replacement geometry gets a new ID.
 #[derive(Clone, Copy, Debug)]
@@ -107,6 +128,8 @@ impl Character {
         if !finite(position)
             || positive.iter().any(|v| !v.is_finite() || *v <= 0.0)
             || nonnegative.iter().any(|v| !v.is_finite() || *v < 0.0)
+            || !profile.height.is_finite()
+            || profile.height < 2.0 * profile.radius
             || !profile.max_slope_degrees.is_finite()
             || !(0.0..90.0).contains(&profile.max_slope_degrees)
         {
@@ -146,7 +169,7 @@ impl Character {
         let slope = p.max_slope_degrees.to_radians().cos();
         let supported = planes.iter().any(|plane| {
             plane.normal[2] >= slope
-                && (dot(plane.normal, old) - plane.offset - p.radius).abs() <= MARGIN
+                && (dot(plane.normal, old) - plane.offset - extent(p, plane.normal)).abs() <= MARGIN
                 && dot(plane.normal, velocity) <= 0.1
         });
         let jump = input.jump && !self.jump_held && supported;
@@ -180,9 +203,9 @@ impl Character {
         let previous = std::mem::take(&mut self.contacts);
         // ponytail: linear scan for one avatar; spatial queries belong to adapter.
         for plane in planes {
-            let c0 = dot(plane.normal, old) - plane.offset - p.radius;
-            let predicted = dot(plane.normal, target) - plane.offset - p.radius;
-            if c0.min(predicted) > MARGIN {
+            let c0 = dot(plane.normal, old) - plane.offset - extent(p, plane.normal);
+            let predicted = dot(plane.normal, target) - plane.offset - extent(p, plane.normal);
+            if c0.min(predicted) > MARGIN && sweep_plane(p, old, target, *plane).is_none() {
                 continue;
             }
             let cached = previous.iter().find(|c| {
@@ -205,8 +228,10 @@ impl Character {
             }
             let mut gradient = scale(add(x, scale(target, -1.0)), inertia);
             for c in &self.contacts {
-                let error =
-                    dot(c.plane.normal, x) - c.plane.offset - p.radius - ALPHA * c.initial_error;
+                let error = dot(c.plane.normal, x)
+                    - c.plane.offset
+                    - extent(p, c.plane.normal)
+                    - ALPHA * c.initial_error;
                 // Outward normal convention -> negative dual, repulsive force.
                 let raw = c.lambda + c.penalty * error;
                 let force = raw.min(0.0);
@@ -227,8 +252,10 @@ impl Character {
             x = add(x, solve_spd(h, scale(gradient, -1.0)));
             // Dual update after the body block (Eqs. 11-12, bounded Sec. 3.2).
             for c in &mut self.contacts {
-                let error =
-                    dot(c.plane.normal, x) - c.plane.offset - p.radius - ALPHA * c.initial_error;
+                let error = dot(c.plane.normal, x)
+                    - c.plane.offset
+                    - extent(p, c.plane.normal)
+                    - ALPHA * c.initial_error;
                 let raw = c.lambda + c.penalty * error;
                 c.lambda = raw.min(0.0);
                 if raw < 0.0 {
@@ -243,7 +270,9 @@ impl Character {
                 && self.contacts.iter().any(|c| {
                     c.lambda < 0.0
                         && c.plane.normal[2] >= slope
-                        && (dot(c.plane.normal, x) - c.plane.offset - p.radius).abs() <= MARGIN
+                        && (dot(c.plane.normal, x) - c.plane.offset - extent(p, c.plane.normal))
+                            .abs()
+                            <= MARGIN
                 }),
         };
         Ok(self.state)
@@ -296,7 +325,7 @@ mod tests {
         for _ in 0..1200 {
             c.step(IDLE, &[FLOOR, wall]).unwrap();
         }
-        assert!((c.state.position[2] - p.radius).abs() < 1e-4);
+        assert!((c.state.position[2] - p.height / 2.0).abs() < 1e-4);
         assert!(c.state.grounded);
         for _ in 0..480 {
             c.step(
@@ -345,6 +374,49 @@ mod tests {
         assert!((c.state.velocity[2] + p.gravity).abs() < 1e-7);
         assert!((c.state.velocity[0].hypot(c.state.velocity[1]) - p.walk_speed).abs() < 1e-7);
         assert!(!c.state.grounded);
+    }
+    #[test]
+    fn capsule_sweeps_caps_sides_and_oblique_planes() {
+        let p = Profile::default();
+        assert!((extent(p, FLOOR.normal) - p.height / 2.0).abs() < 1e-12);
+        let wall = Plane {
+            id: 2,
+            normal: [-1.0, 0.0, 0.0],
+            offset: -1.0,
+        };
+        assert!(
+            (sweep_plane(p, [0.0, 0.0, 2.0], [2.0, 0.0, 2.0], wall).unwrap() - 0.35).abs() < 1e-12
+        );
+        assert!(sweep_plane(p, [0.0, 0.0, 2.0], [0.0, 0.0, 3.0], FLOOR).is_none());
+        let n = 2.0_f64.sqrt().recip();
+        assert!(
+            (extent(p, [n, 0.0, n]) - (p.radius + n * (p.height / 2.0 - p.radius))).abs() < 1e-12
+        );
+        let ceiling = Plane {
+            id: 3,
+            normal: [0.0, 0.0, -1.0],
+            offset: -2.0,
+        };
+        let mut c = Character::new(p, [0.0, 0.0, p.height / 2.0]).unwrap();
+        let mut highest = 0.0_f64;
+        for i in 0..480 {
+            let s = c
+                .step(
+                    Input {
+                        movement: [0.0; 2],
+                        jump: i == 20,
+                    },
+                    &[FLOOR, ceiling],
+                )
+                .unwrap();
+            highest = highest.max(s.position[2] + p.height / 2.0);
+        }
+        assert!(highest > 1.99 && highest < 2.002);
+        assert!(c.state().grounded);
+        let before = c.state();
+        c.step(IDLE, &[]).unwrap();
+        assert!(c.state().position[2] < before.position[2]);
+        assert!(!c.state().grounded); // removed surfaces cannot leave ghost support
     }
     #[test]
     fn invalid_input_does_not_mutate() {

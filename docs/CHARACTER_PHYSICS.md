@@ -48,15 +48,16 @@ From repository root:
 ```sh
 cargo test --manifest-path physics/Cargo.toml
 cargo run --manifest-path physics/Cargo.toml --example trajectory > trajectory.csv
+cargo run --manifest-path physics/Cargo.toml --example obstacle_course > course.csv
 ```
 
 `physics/src/lib.rs` is a dependency-free Rust library. `Character::step` advances exactly 1/240 second. Input is world-space XY; Z is up. Analog magnitude is preserved and diagonal speed is capped. Jump triggers on a press edge while supported, with no automatic repeat, coyote time or jump buffering.
 
-The collision proxy is currently a sphere, **not the R6 body shape**. Its position is the sphere centre; on a flat floor its foot point is `position.z - radius`. A visual adapter would place the mesh origin at that foot point. A capsule and swept collision are required before gameplay testing.
+The collision proxy is an upright capsule, 1.53 m tall with 0.30 m radius. Position is its centre; the mesh foot origin is `position.z - height/2`. Plane support uses `radius + abs(normal.z) * (height/2 - radius)`, so caps and sides have different clearance. `sweep_plane` returns the exact first crossing fraction against an infinite plane; the contact solver includes predicted crossings. This is not finite triangle/edge collision or a complete movement sweep-and-slide system.
 
 Planes represent infinite supporting half-spaces, not complete map triangles. A host must select local, relevant surfaces and retain stable IDs only for unchanged geometry. Supplying every face of a level as an infinite plane would constrain the avatar incorrectly. Moving platforms are unsupported. Character teleport/restart should create a fresh instance to clear contact history.
 
-The tests check free fall, diagonal speed, landing, wall blocking, ballistic jump rise, held-jump behaviour and invalid-input rejection. The trajectory example exercises walking and a jump without a game installation. These are offline numerical checks, not Roblox/BeamNG parity tests.
+The tests check free fall, diagonal speed, landing, wall blocking, ballistic jump rise, held-jump behaviour, capsule support/sweeps, low-ceiling contact, removed-surface cleanup and invalid-input rejection. The trajectory example exercises walking and a jump without a game installation. These are offline numerical checks, not Roblox/BeamNG parity tests.
 
 ## Measurement and next integration gates
 
@@ -64,7 +65,7 @@ The tests check free fall, diagonal speed, landing, wall blocking, ballistic jum
 
 Before tuning, compare acceleration curves, launch speed, apex displacement and time, flight duration, stopping distance and landing error. Obtain multiple repeats at several render rates, then fit profiles with recorded uncertainty. Pin evidence to the tested engine version.
 
-Before BeamNG playability: verify a supported Rust loading/IPC mechanism on the target installation, map coordinate/scale conversion, capsule sweeps, stairs/slopes, contact lifetime, camera/animation state output and safe enable/disable ownership of movement. Avoid simultaneous native walking and Rust control. Add vehicle/platform force coupling only after static-world movement works. Other games require their own adapters; compatibility is not automatic.
+Before BeamNG playability: verify a supported Rust loading/IPC mechanism on the target installation, map coordinate/scale conversion, finite capsule sweeps, stairs/slopes, contact lifetime, camera/animation state output and safe enable/disable ownership of movement. Avoid simultaneous native walking and Rust control. Add vehicle/platform force coupling only after static-world movement works. Other games require their own adapters; compatibility is not automatic.
 
 ## Sources
 
@@ -79,3 +80,5 @@ Before BeamNG playability: verify a supported Rust loading/IPC mechanism on the 
 9. [Author's AVBD 3D solver reference](https://github.com/savant117/avbd-demo3d)
 10. [SK8-ENGINE project](https://github.com/SK8-ENGINE/skate-3-rust-engine), inspected main `7ae67f269c024ed0b1aa945701e04fa5bf419848`
 11. [2010 Rust Rewrite Mashup](https://github.com/chasmlol/2010-rust-rewrite-mashup)
+
+The offline obstacle course is a four-second corridor/low-ceiling scenario with clearance assertions and CSV output. It uses infinite half-spaces; finite obstacles, stairs and map-mesh navigation remain pending.
