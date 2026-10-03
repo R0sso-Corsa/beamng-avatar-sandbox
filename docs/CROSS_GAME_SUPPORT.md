@@ -37,3 +37,5 @@ The check actually links against the built library and asserts walking, groundin
 Each game still needs a supported native plugin/loading route, input mapping, mesh extraction, unit/axis conversion, fixed-step scheduling and avatar rendering. For a source-controlled Rust game, using the Rust crate directly is simpler. For C/C++ hosts, the header/library boundary provides reuse. Managed-language hosts can bind this ABI, but their calling convention and struct layout must match the header. No native BeamNG loading path or other engine binding has been verified here.
 
 Next: expose profile configuration and platform state across the ABI, validate a small host scene on another OS, and establish BeamNG's supported integration route before connecting gameplay. The same simulation can be shared across games; assets, host collision APIs, camera and animations remain game-specific.
+
+BeamNG-specific feasibility and the read-only runtime inventory are documented in [BeamNG integration](BEAMNG_INTEGRATION.md). Historical developer guidance indicates custom DLL loading is sandboxed; the C ABI does not by itself resolve that restriction.
