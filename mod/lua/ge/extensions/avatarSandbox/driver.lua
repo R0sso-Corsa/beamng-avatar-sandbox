@@ -61,6 +61,8 @@ function M.advance(dtSim)
     local ok, result = pcall(backend, input, stepSeconds)
     if not ok or result ~= true then
       lastError = ok and 'Adapter rejected step' or tostring(result)
+      local t=type(extensions)=='table' and extensions.avatarSandbox_telemetry
+      if t then t.record('error','driver',lastError) end
       M.stop()
       return false, lastError
     end
