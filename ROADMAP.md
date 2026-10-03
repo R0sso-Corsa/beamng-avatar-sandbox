@@ -138,3 +138,15 @@ See [avatar import and multiplayer delivery](docs/AVATAR_IMPORT.md) for the sour
 
 - [x] Add offline projectile trajectories, host-fed impact/bounce events, lifetimes and one-shot bomb timers.
 - [ ] Connect projectile collision shapes, damage/destruction and visual effects to host adapters.
+
+
+## Optional character mode and Roblox-style camera
+
+- [x] Keep mod enablement separate from character choice; default to normal BeamNG and allow Roblox/BeamNG switching while enabled.
+- [x] Add mock-tested adapter enter/leave transitions and return to BeamNG on disable/mission exit.
+- [x] Add Classic-inspired camera orbit, pitch limits, zoom-to-first-person and host-fed obstruction handling offline.
+- [ ] Add a visible character-mode selector and bind camera mouse/orbit/zoom controls in BeamNG.
+- [ ] Apply camera poses, hide the local head in first person and restore native camera/input/vehicle state on leaving avatar mode.
+- [ ] Verify stock gameplay remains available with the mod enabled and Roblox character mode switched off.
+
+Requirement: users can choose the Roblox character or the typical BeamNG experience without uninstalling or disabling the mod. Camera and avatar takeover only occur in Roblox character mode; they must be restored when leaving it.
