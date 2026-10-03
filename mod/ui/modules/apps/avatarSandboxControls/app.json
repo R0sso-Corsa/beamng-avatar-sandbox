@@ -1,0 +1,1 @@
+{"name":"Avatar Sandbox Controls","author":"Avatar Sandbox","version":"0.1","description":"Character choice, controls and local diagnostics","directive":"avatarSandboxControls","domElement":"<avatar-sandbox-controls></avatar-sandbox-controls>","css":{"width":"340px","height":"460px","top":"40px","left":"20px"},"preserveAspectRatio":false}
