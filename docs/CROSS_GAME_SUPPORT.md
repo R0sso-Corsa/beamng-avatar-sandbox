@@ -12,7 +12,7 @@ The dependency-free Rust core now builds as `rlib`, `cdylib` and `staticlib`. A 
 - Call `avatar_get_state` for position, velocity and grounded state. Drive the visible avatar, camera and animation in the host; this library performs no rendering or host-engine calls.
 - Return codes: 0 success, -1 unknown handle, -2 invalid input or failed physics step, -3 unavailable registry. Failed steps preserve state. Invalid/stale handles are rejected. Pointer validity is the caller's responsibility: nonnull pointers alone do not prove memory is readable/writable. Never pass untrusted raw addresses.
 
-The C ABI uses the default profile and static mesh stepping only. Profile configuration and the translating-platform adapter are currently Rust-only. ABI v1 does not expose per-game gravity changes, articulated AVBD, vehicle forces or networking. All instances serialize through one mutex; benchmark before using many avatars. Allocation failure is not a recoverable ABI error. Calls must finish before unloading the library.
+The C ABI supports default or custom profiles and static mesh stepping. Obtain `AvatarProfileV1` defaults with `avatar_default_profile_v1`, adjust fields and create with `avatar_create_with_profile_v1`. Invalid profiles return a zero handle. Existing instances are not modified; recreate to change profile settings. The frozen v1 layout matches the header. `metres_per_stud` is metadata: changing it does not automatically rescale other fields or uploaded geometry. The translating-platform adapter remains Rust-only. ABI v1 does not expose per-game gravity changes, articulated AVBD, vehicle forces or networking. All instances serialize through one mutex; benchmark before using many avatars. Allocation failure is not a recoverable ABI error. Calls must finish before unloading the library.
 
 ## Runnable C host check
 
@@ -36,6 +36,6 @@ The check actually links against the built library and asserts walking, groundin
 
 Each game still needs a supported native plugin/loading route, input mapping, mesh extraction, unit/axis conversion, fixed-step scheduling and avatar rendering. For a source-controlled Rust game, using the Rust crate directly is simpler. For C/C++ hosts, the header/library boundary provides reuse. Managed-language hosts can bind this ABI, but their calling convention and struct layout must match the header. No native BeamNG loading path or other engine binding has been verified here.
 
-Next: expose profile configuration and platform state across the ABI, validate a small host scene on another OS, and establish BeamNG's supported integration route before connecting gameplay. The same simulation can be shared across games; assets, host collision APIs, camera and animations remain game-specific.
+Next: expose platform state across the ABI, validate a small host scene on another OS, and establish BeamNG's supported integration route before connecting gameplay. The same simulation can be shared across games; assets, host collision APIs, camera and animations remain game-specific.
 
 BeamNG-specific feasibility and the read-only runtime inventory are documented in [BeamNG integration](BEAMNG_INTEGRATION.md). Historical developer guidance indicates custom DLL loading is sandboxed; the C ABI does not by itself resolve that restriction.
