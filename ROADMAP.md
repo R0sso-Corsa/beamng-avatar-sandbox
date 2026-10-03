@@ -90,3 +90,15 @@ Acceptance: another user can import a compatible avatar using the documented pro
 ## Later, when the foundation works
 
 R15, additional animation states, custom animation packs, layered clothing, dynamic heads, movable blocks, persistence, multiplayer, and automated online avatar retrieval.
+
+
+## Cross-game portability
+
+- [x] Build Rust, shared and static libraries with a versioned C ABI.
+- [x] Add managed handles, transactional static mesh upload, stepping and state snapshots.
+- [x] Run a separate C host smoke check on macOS.
+- [ ] Expose configurable profiles and moving-platform support through the ABI.
+- [ ] Validate Windows/Linux builds and a real game adapter.
+- [ ] Verify BeamNG native loading and host collision/rendering integration.
+
+See [cross-game support](docs/CROSS_GAME_SUPPORT.md) for the contract and runnable host check.
