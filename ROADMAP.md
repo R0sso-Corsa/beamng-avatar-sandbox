@@ -1,6 +1,15 @@
 # Prototype roadmap
 
-All tasks are pending. Advance when the acceptance checks pass in the target BeamNG installation.
+The offline foundation below is implemented. Gameplay milestones remain pending; advance when the acceptance checks pass in the target BeamNG installation.
+
+## Offline foundation
+
+- [x] Create a GE Lua extension with explicit loading and enable/disable controls.
+- [x] Add uniquely named input actions without overriding default bindings.
+- [x] Add mod-owned target registration, reach/visibility-result validation and interaction callbacks.
+- [x] Clear focus across frames and reset targets at level exit/unload.
+- [x] Add a ZIP packager, offline Lua smoke checks and an engine test checklist.
+- [ ] Verify extension hooks and actions in BeamNG.
 
 ## 1. Verify the player foundation
 
@@ -59,4 +68,3 @@ Acceptance: another user can import a compatible avatar using the documented pro
 ## Later, when the foundation works
 
 R15, additional animation states, custom animation packs, layered clothing, dynamic heads, movable blocks, persistence, multiplayer, and automated online avatar retrieval.
-
