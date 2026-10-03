@@ -1,6 +1,8 @@
 //! Engine-neutral, Z-up, metre/second character prototype.
 //! AVBD subset: one translational body against static, frictionless planes.
 //! Static triangle collision lives in mesh; no rotation, ragdolls or host calls.
+pub mod building;
+pub mod camera;
 pub mod ffi;
 pub mod gear;
 pub mod mesh;
