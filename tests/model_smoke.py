@@ -24,7 +24,7 @@ with tempfile.TemporaryDirectory() as directory:
     assert source.count('\no ') == 6
     head = source.split('o Head\n')[1].split('\no ')[0]
     points = [list(map(float, l.split()[1:])) for l in head.splitlines() if l.startswith('v ')]
-    assert abs(max(p[0] for p in points)-min(p[0] for p in points)-.375) < 1e-6
+    assert abs(max(p[0] for p in points)-min(p[0] for p in points)-.36) < 1e-6
     assert len(points) > 200  # Round head, not the former eight-vertex box.
     for width, height in [(2, 2), (2, 1), (1, 2)]:
         png = (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 6, 0, 0, 0))
@@ -41,7 +41,7 @@ with tempfile.TemporaryDirectory() as directory:
         dx = max(p[0] for p in points)-min(p[0] for p in points)
         dz = max(p[2] for p in points)-min(p[2] for p in points)
         assert abs(dx/dz-width/height) < 1e-4
-        assert abs(max(dx,dz)-.25) < 1e-6
+        assert abs(max(dx,dz)-.35) < 1e-6
         assert len(set(p[1] for p in points)) > 2
         assert 'preserveAspectRatio="xMidYMid meet"' in (folder/'preview.svg').read_text()
         vertices = [l for l in obj.splitlines() if l.startswith('v ')]
