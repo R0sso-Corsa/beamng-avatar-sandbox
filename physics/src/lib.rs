@@ -51,6 +51,11 @@ pub struct Profile {
     pub max_slope_degrees: f64,
     /// Gameplay stair limit in metres; zero disables stepping.
     pub step_height: f64,
+    /// Bounded shallow-overlap correction; zero disables recovery.
+    pub recovery_distance: f64,
+    /// Passive grounded friction; the movement motor overrides it while walking.
+    pub static_friction: f64,
+    pub dynamic_friction: f64,
 }
 impl Default for Profile {
     fn default() -> Self {
@@ -67,6 +72,9 @@ impl Default for Profile {
             height: 1.53,
             max_slope_degrees: 45.0,
             step_height: 0.30,
+            recovery_distance: 0.10,
+            static_friction: 0.8,
+            dynamic_friction: 0.6,
         }
     }
 }
@@ -130,10 +138,14 @@ impl Character {
             profile.ground_acceleration,
             profile.air_acceleration,
             profile.step_height,
+            profile.recovery_distance,
+            profile.static_friction,
+            profile.dynamic_friction,
         ];
         if !finite(position)
             || positive.iter().any(|v| !v.is_finite() || *v <= 0.0)
             || nonnegative.iter().any(|v| !v.is_finite() || *v < 0.0)
+            || profile.dynamic_friction > profile.static_friction
             || !profile.height.is_finite()
             || profile.height < 2.0 * profile.radius
             || !profile.max_slope_degrees.is_finite()
@@ -197,6 +209,33 @@ impl Character {
         if d > 0.0 {
             for i in 0..2 {
                 velocity[i] += delta[i] * (limit / d).min(1.0);
+            }
+        }
+        // Coulomb impulse for passive support: gravity supplies the estimated
+        // normal impulse. This is a controller pre-step, not AVBD friction rows.
+        if supported && !jump && input.movement == [0.0; 2] {
+            if let Some(plane) = planes
+                .iter()
+                .filter(|plane| {
+                    plane.normal[2] >= slope
+                        && (dot(plane.normal, old) - plane.offset - extent(p, plane.normal)).abs()
+                            <= MARGIN
+                })
+                .max_by(|a, b| a.normal[2].total_cmp(&b.normal[2]))
+            {
+                let predicted = add(velocity, [0.0, 0.0, -p.gravity * DT]);
+                let normal_speed = dot(predicted, plane.normal);
+                let tangent = add(predicted, scale(plane.normal, -normal_speed));
+                let speed = dot(tangent, tangent).sqrt();
+                let impulse = (-normal_speed).max(0.0);
+                let remaining = if speed <= p.static_friction * impulse {
+                    0.0
+                } else {
+                    (speed - p.dynamic_friction * impulse).max(0.0)
+                };
+                if speed > 0.0 {
+                    velocity = add(velocity, scale(tangent, remaining / speed - 1.0));
+                }
             }
         }
         // Inertial target (Eq. 2); initial guess uses that target, rather than
@@ -439,5 +478,50 @@ mod tests {
             .is_err());
         assert!(c.step(IDLE, &[FLOOR, FLOOR]).is_err());
         assert_eq!(c.state(), before);
+    }
+    #[test]
+    fn passive_friction_holds_ramp_and_slows_slide_without_affecting_air() {
+        let angle = 20_f64.to_radians();
+        let ramp = Plane {
+            id: 4,
+            normal: [-angle.sin(), 0.0, angle.cos()],
+            offset: 0.0,
+        };
+        let p = Profile {
+            ground_acceleration: 0.0,
+            air_acceleration: 0.0,
+            ..Profile::default()
+        };
+        let start = [0.0, 0.0, extent(p, ramp.normal) / ramp.normal[2]];
+        let mut held = Character::new(p, start).unwrap();
+        let slippery = Profile {
+            static_friction: 0.0,
+            dynamic_friction: 0.0,
+            ..p
+        };
+        let mut sliding = Character::new(slippery, start).unwrap();
+        for _ in 0..240 {
+            held.step(IDLE, &[ramp]).unwrap();
+            sliding.step(IDLE, &[ramp]).unwrap();
+        }
+        assert!((held.state.position[0] - start[0]).abs() < 0.001);
+        assert!(sliding.state.position[0] < -1.0);
+        let mut dry = Character::new(p, [0.0, 0.0, p.height / 2.0]).unwrap();
+        let mut ice = Character::new(slippery, dry.state.position).unwrap();
+        dry.state.velocity = [2.0, 0.0, 0.0];
+        ice.state.velocity = dry.state.velocity;
+        for _ in 0..60 {
+            dry.step(IDLE, &[FLOOR]).unwrap();
+            ice.step(IDLE, &[FLOOR]).unwrap();
+        }
+        assert!(dry.state.velocity[0].abs() < 0.001);
+        assert!((ice.state.velocity[0] - 2.0).abs() < 0.001);
+        dry.state.position = [0.0, 0.0, 100.0];
+        ice.state.position = dry.state.position;
+        dry.state.velocity = [2.0, 0.0, 0.0];
+        ice.state.velocity = dry.state.velocity;
+        dry.step(IDLE, &[]).unwrap();
+        ice.step(IDLE, &[]).unwrap();
+        assert_eq!(dry.state, ice.state);
     }
 }
