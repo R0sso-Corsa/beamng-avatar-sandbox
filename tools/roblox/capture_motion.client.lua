@@ -7,6 +7,10 @@ local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
+-- Fill these in for each trial. PhysicsSteppingMethod is NotScriptable;
+-- copy its setting from Studio's Workspace Properties panel.
+local trialLabel = "flat_idle"
+local steppingMethod = "record manually from Workspace Properties"
 local function xyz(v) return {v.X, v.Y, v.Z} end
 local capture = {
     metadata = {
@@ -15,7 +19,7 @@ local capture = {
         jumpPower = humanoid.JumpPower, jumpHeight = humanoid.JumpHeight,
         useJumpPower = humanoid.UseJumpPower, hipHeight = humanoid.HipHeight,
         maxSlopeAngle = humanoid.MaxSlopeAngle, assemblyMass = root.AssemblyMass,
-        steppingMethod = workspace.PhysicsSteppingMethod.Name,
+        trial = trialLabel, steppingMethod = steppingMethod,
         sampling = "PostSimulation (frame level)", axis = "Roblox Y-up, studs",
     }, samples = {},
 }
@@ -36,6 +40,14 @@ connection = RunService.PostSimulation:Connect(function(dt)
     })
     if elapsed >= 10 then
         connection:Disconnect()
-        print("AVATAR_MOTION_JSON " .. HttpService:JSONEncode(capture))
+        -- Small batches avoid truncating one large Studio Output message.
+        print("AVATAR_MOTION_METADATA " .. HttpService:JSONEncode(capture.metadata))
+        for first = 1, #capture.samples, 30 do
+            local batch = {}
+            for i = first, math.min(first + 29, #capture.samples) do
+                table.insert(batch, capture.samples[i])
+            end
+            print("AVATAR_MOTION_SAMPLES " .. HttpService:JSONEncode({first = first, samples = batch}))
+        end
     end
 end)
