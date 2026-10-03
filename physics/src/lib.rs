@@ -529,3 +529,6 @@ mod tests {
         assert_eq!(dry.state, ice.state);
     }
 }
+
+pub mod catalogue;
+pub mod driver;

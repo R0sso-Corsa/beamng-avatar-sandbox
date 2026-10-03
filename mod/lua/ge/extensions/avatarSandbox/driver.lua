@@ -1,80 +1,43 @@
--- Fixed-step host driver; attach a synchronous adapter before using controls.
+-- Rust-backed scheduling facade. Adapter executes batches against host geometry.
 local M = {}
-local stepSeconds, maxSteps = 1 / 240, 16
-local backend, accumulator, dropped = nil, 0, 0
-local controls = {forward=0, backward=0, left=0, right=0, jump=0}
-local heading, jumpPending, lastError = 0, false, nil
-local function finite(n)
-  return type(n) == 'number' and n == n and math.abs(n) < math.huge
-end
-local function clearInput()
-  for key in pairs(controls) do controls[key] = 0 end
-  jumpPending = false
+local backend, lastError
+local methods={'reset','setControl','setHeading','advance','status'}
+local function call(name,...)
+  if not backend then return false,'No Rust driver adapter' end
+  local ok,a,b=pcall(backend[name],...)
+  if ok and a~=false then return a,b end
+  lastError=ok and tostring(b or 'Adapter rejected operation') or tostring(a)
+  local t=type(extensions)=='table' and extensions.avatarSandbox_telemetry
+  if t then t.record('error','driver',lastError) end
+  M.stop()
+  return false,lastError
 end
 function M.stop()
-  backend, accumulator = nil, 0
-  clearInput()
+  local old=backend; backend=nil
+  if old then pcall(old.reset) end
 end
--- Adapter must commit one step atomically and return true; false/errors stop it.
-function M.attach(step)
-  if type(step) ~= 'function' then return false, 'Expected step callback' end
-  M.stop()
-  backend, dropped, heading, lastError = step, 0, 0, nil
-  return true
-end
-function M.setControl(name, value)
-  if controls[name] == nil or not finite(value) or value < 0 or value > 1 then
-    return false, 'Invalid control'
+function M.attach(adapter)
+  if type(adapter)~='table' then return false,'Expected Rust driver adapter' end
+  for _,name in ipairs(methods) do
+    if type(adapter[name])~='function' then return false,'Missing adapter method: '..name end
   end
-  if not backend then return false, 'No physics adapter' end
-  if name == 'jump' and value > 0 and controls.jump == 0 then jumpPending = true end
-  controls[name] = value
-  return true
+  M.stop(); backend=adapter; lastError=nil
+  return call('reset')
 end
--- Horizontal radians: heading zero means forward +Y, right +X, Z-up.
-function M.setHeading(value)
-  if not finite(value) then return false, 'Invalid heading' end
-  heading = value
-  return true
-end
-function M.advance(dtSim)
-  if not finite(dtSim) or dtSim < 0 then return false, 'Invalid simulation delta' end
-  if not backend then return true, 0 end
-  if dtSim == 0 then
-    accumulator = 0
-    clearInput()
-    return true, 0
-  end
-  local total = accumulator + dtSim
-  if not finite(total) then return false, 'Simulation delta overflow' end
-  local due = math.floor(total / stepSeconds + 1e-9)
-  local count = math.min(due, maxSteps)
-  -- Drop excess whole steps deliberately; retain only the interpolation fraction.
-  accumulator = math.max(0, total - due * stepSeconds)
-  dropped = dropped + (due - count) * stepSeconds
-  local x, y = controls.right - controls.left, controls.forward - controls.backward
-  local length = math.max(1, math.sqrt(x*x + y*y))
-  x, y = x / length, y / length
-  local cosine, sine = math.cos(heading), math.sin(heading)
-  for _ = 1, count do
-    local input = {movement={cosine*x - sine*y, sine*x + cosine*y}, jump=jumpPending or controls.jump > 0}
-    local ok, result = pcall(backend, input, stepSeconds)
-    if not ok or result ~= true then
-      lastError = ok and 'Adapter rejected step' or tostring(result)
-      local t=type(extensions)=='table' and extensions.avatarSandbox_telemetry
-      if t then t.record('error','driver',lastError) end
-      M.stop()
-      return false, lastError
-    end
-    jumpPending = false
-  end
-  return true, count
+function M.setControl(name,value) return call('setControl',name,value) end
+function M.setHeading(value) return call('setHeading',value) end
+function M.advance(dt)
+  if not backend then return true,0 end
+  return call('advance',dt)
 end
 function M.status()
-  return {attached=backend ~= nil, alpha=accumulator / stepSeconds,
-    droppedSeconds=dropped, lastError=lastError, stepSeconds=stepSeconds}
+  if not backend then return {attached=false,lastError=lastError} end
+  local state=call('status')
+  if type(state)~='table' then return {attached=false,lastError=lastError} end
+  state.attached=true; state.lastError=lastError
+  return state
 end
-function M.onUpdate(dtReal, dtSim) return M.advance(dtSim) end
+function M.onUpdate(dtReal,dtSim) return M.advance(dtSim) end
 function M.onClientEndMission() M.stop() end
 function M.onExtensionUnloaded() M.stop() end
 return M

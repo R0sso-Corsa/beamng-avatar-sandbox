@@ -1,3 +1,7 @@
+## Rust driver and catalogue update
+
+`physics/src/driver.rs` owns 240 Hz input batching, diagonal normalization, heading rotation, jump edges, pause input release and bounded catch-up. `physics/src/catalogue.rs` owns approved avatar selection, revisioned snapshots, validation and missing-pack fallback. Lua delegates to injected Rust adapters; it no longer implements those rules. These modules currently expose Rust APIs, not C bindings. A native binding, authenticated transport and engine rendering remain required; no live BeamNG or BeamMP compatibility is claimed.
+
 # Cross-game support: C ABI v1
 
 The dependency-free Rust core now builds as `rlib`, `cdylib` and `staticlib`. A game plugin can call the same simulation through `physics/include/avatar_physics.h`; it does not need to embed Rust or copy the physics into its game engine. This interface is a foundation, not a working plugin for any game.

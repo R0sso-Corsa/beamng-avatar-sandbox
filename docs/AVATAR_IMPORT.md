@@ -1,3 +1,7 @@
+## Rust driver and catalogue update
+
+`physics/src/driver.rs` owns 240 Hz input batching, diagonal normalization, heading rotation, jump edges, pause input release and bounded catch-up. `physics/src/catalogue.rs` owns approved avatar selection, revisioned snapshots, validation and missing-pack fallback. Lua delegates to injected Rust adapters; it no longer implements those rules. These modules currently expose Rust APIs, not C bindings. A native binding, authenticated transport and engine rendering remain required; no live BeamNG or BeamMP compatibility is claimed.
+
 # Local R6 source imports and multiplayer plan
 
 The initial import configuration accepts an exported OBJ with separate Head, Torso, LeftArm, RightArm, LeftLeg and RightLeg groups, optional MTL and local PNG/JPEG textures. Coordinates are metres, Z-up. This is a source package, not a rigged BeamNG avatar; Studio extraction, accessory conversion, skinning, animations and engine mesh/material conversion remain pending.
