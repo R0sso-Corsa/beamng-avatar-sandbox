@@ -235,3 +235,301 @@ mod tests {
         assert!(g.advance(f64::NAN).is_err());
     }
 }
+
+/// Host-configured projectile parameters for values not established by the wiki.
+#[derive(Clone, Copy)]
+pub struct ProjectileConfig {
+    pub speed: f64,
+    pub gravity: f64,
+    pub lifetime: f64,
+}
+#[derive(Clone, Copy)]
+pub struct Impact {
+    pub fraction: f64,
+    pub normal: Vec3,
+    pub player: bool,
+}
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ProjectileEvent {
+    Damage(f64),
+    Explosion { damage: f64, radius: f64 },
+    Bounce,
+    Expired,
+}
+#[derive(Clone, Copy)]
+pub struct Projectile {
+    pub position: Vec3,
+    pub velocity: Vec3,
+    damage: f64,
+    bounce: f64,
+    explosion: Option<f64>,
+    gravity: f64,
+    remaining: f64,
+    active: bool,
+    stop_on_surface: bool,
+}
+impl Projectile {
+    pub fn new(command: Command, config: ProjectileConfig) -> Result<Self, &'static str> {
+        let Effect::Projectile {
+            damage,
+            speed,
+            gravity_factor,
+            bounce_damage_factor,
+            explosion_radius,
+        } = command.effect
+        else {
+            return Err("not a projectile");
+        };
+        if !finite(command.origin)
+            || !finite(command.direction)
+            || !config.speed.is_finite()
+            || config.speed <= 0.0
+            || !config.gravity.is_finite()
+            || config.gravity < 0.0
+            || !config.lifetime.is_finite()
+            || config.lifetime <= 0.0
+            || !damage.is_finite()
+            || damage < 0.0
+            || !bounce_damage_factor.is_finite()
+            || !(0.0..=1.0).contains(&bounce_damage_factor)
+            || speed.is_some_and(|v| !v.is_finite() || v <= 0.0)
+            || gravity_factor.is_some_and(|v| !v.is_finite() || v < 0.0)
+            || explosion_radius.is_some_and(|v| !v.is_finite() || v <= 0.0)
+        {
+            return Err("invalid projectile configuration");
+        }
+        let length = command.direction.iter().map(|v| v * v).sum::<f64>().sqrt();
+        if !length.is_finite() || length < 1e-9 {
+            return Err("invalid aim");
+        }
+        let velocity = command
+            .direction
+            .map(|v| v / length * speed.unwrap_or(config.speed));
+        let gravity = config.gravity * gravity_factor.unwrap_or(1.0);
+        if !finite(velocity) || !gravity.is_finite() {
+            return Err("projectile overflow");
+        }
+        Ok(Self {
+            position: command.origin,
+            velocity,
+            damage,
+            bounce: bounce_damage_factor,
+            explosion: explosion_radius,
+            gravity,
+            remaining: config.lifetime,
+            active: true,
+            stop_on_surface: command.gear == Gear::Paintball,
+        })
+    }
+    /// Host sweeps a projectile shape over this segment, then supplies its first hit.
+    pub fn segment(&self, dt: f64) -> Result<(Vec3, Vec3), &'static str> {
+        if !dt.is_finite() || dt <= 0.0 {
+            return Err("invalid delta");
+        }
+        let t = dt.min(self.remaining);
+        let mut end = std::array::from_fn(|i| self.position[i] + self.velocity[i] * t);
+        end[2] -= 0.5 * self.gravity * t * t;
+        if !finite(end) {
+            return Err("projectile overflow");
+        }
+        Ok((self.position, end))
+    }
+    pub fn advance(
+        &mut self,
+        dt: f64,
+        impact: Option<Impact>,
+    ) -> Result<Option<ProjectileEvent>, &'static str> {
+        let (start, end) = self.segment(dt)?;
+        if !self.active {
+            return Ok(None);
+        }
+        if let Some(hit) = impact {
+            let norm = hit.normal.iter().map(|v| v * v).sum::<f64>();
+            if !hit.fraction.is_finite()
+                || !(0.0..=1.0).contains(&hit.fraction)
+                || !finite(hit.normal)
+                || (norm - 1.0).abs() > 1e-6
+            {
+                return Err("invalid impact");
+            }
+        }
+        let t = dt.min(self.remaining);
+        self.remaining -= t;
+        self.velocity[2] -= self.gravity * t * impact.map_or(1.0, |h| h.fraction);
+        self.position = end;
+        if let Some(hit) = impact {
+            self.position = std::array::from_fn(|i| start[i] + (end[i] - start[i]) * hit.fraction);
+            if let Some(radius) = self.explosion {
+                self.active = false;
+                return Ok(Some(ProjectileEvent::Explosion {
+                    damage: self.damage,
+                    radius,
+                }));
+            }
+            if hit.player {
+                self.active = false;
+                return Ok(Some(ProjectileEvent::Damage(self.damage)));
+            }
+            if self.stop_on_surface {
+                self.active = false;
+                return Ok(Some(ProjectileEvent::Expired));
+            }
+            let dot = self
+                .velocity
+                .iter()
+                .zip(hit.normal)
+                .map(|(v, n)| v * n)
+                .sum::<f64>();
+            if dot < 0.0 {
+                self.velocity =
+                    std::array::from_fn(|i| self.velocity[i] - 2.0 * dot * hit.normal[i]);
+            }
+            self.damage *= self.bounce;
+            return Ok(Some(ProjectileEvent::Bounce));
+        }
+        if self.remaining <= 0.0 {
+            self.active = false;
+            return Ok(Some(ProjectileEvent::Expired));
+        }
+        Ok(None)
+    }
+}
+pub struct BombTimer {
+    remaining: f64,
+    damage: f64,
+    fired: bool,
+}
+impl BombTimer {
+    pub fn new(command: Command) -> Result<Self, &'static str> {
+        let Effect::Bomb {
+            damage,
+            fuse_seconds,
+        } = command.effect
+        else {
+            return Err("not a bomb");
+        };
+        if !damage.is_finite() || damage < 0.0 || !fuse_seconds.is_finite() || fuse_seconds <= 0.0 {
+            return Err("invalid bomb");
+        }
+        Ok(Self {
+            remaining: fuse_seconds,
+            damage,
+            fired: false,
+        })
+    }
+    /// Radius/impulse are host settings; return nominal damage exactly once.
+    pub fn advance(&mut self, dt: f64) -> Result<Option<f64>, &'static str> {
+        if !dt.is_finite() || dt < 0.0 {
+            return Err("invalid delta");
+        }
+        if self.fired {
+            return Ok(None);
+        }
+        self.remaining = (self.remaining - dt).max(0.0);
+        if self.remaining == 0.0 {
+            self.fired = true;
+            Ok(Some(self.damage))
+        } else {
+            Ok(None)
+        }
+    }
+}
+#[cfg(test)]
+mod projectile_tests {
+    use super::*;
+    #[test]
+    fn trajectories_impacts_expiry_and_bomb_fuse() {
+        let mut gears = GearSystem::default();
+        let config = ProjectileConfig {
+            speed: 10.0,
+            gravity: 10.0,
+            lifetime: 2.0,
+        };
+        gears.equip(Gear::Superball).unwrap();
+        let cmd = gears
+            .activate([0.0; 3], [1.0, 0.0, 0.0], UseMode::Primary)
+            .unwrap();
+        let mut ball = Projectile::new(cmd, config).unwrap();
+        ball.advance(0.1, None).unwrap();
+        assert!((ball.position[2] + 0.05).abs() < 1e-10);
+        let before = ball.position;
+        assert!(ball
+            .advance(
+                0.1,
+                Some(Impact {
+                    fraction: 2.0,
+                    normal: [-1.0, 0.0, 0.0],
+                    player: false
+                })
+            )
+            .is_err());
+        assert_eq!(ball.position, before);
+        assert_eq!(
+            ball.advance(
+                0.1,
+                Some(Impact {
+                    fraction: 0.5,
+                    normal: [-1.0, 0.0, 0.0],
+                    player: false
+                })
+            )
+            .unwrap(),
+            Some(ProjectileEvent::Bounce)
+        );
+        assert!(ball.velocity[0] < 0.0);
+        assert_eq!(
+            ball.advance(
+                0.1,
+                Some(Impact {
+                    fraction: 0.5,
+                    normal: [1.0, 0.0, 0.0],
+                    player: true
+                })
+            )
+            .unwrap(),
+            Some(ProjectileEvent::Damage(27.5))
+        );
+        assert_eq!(ball.advance(0.1, None).unwrap(), None);
+        let mut expired = Projectile::new(cmd, config).unwrap();
+        assert_eq!(
+            expired.advance(3.0, None).unwrap(),
+            Some(ProjectileEvent::Expired)
+        );
+        gears.equip(Gear::Rocket).unwrap();
+        let mut rocket = Projectile::new(
+            gears
+                .activate([0.0; 3], [1.0, 0.0, 0.0], UseMode::Primary)
+                .unwrap(),
+            config,
+        )
+        .unwrap();
+        rocket.advance(0.1, None).unwrap();
+        assert_eq!(rocket.position[2], 0.0);
+        assert_eq!(
+            rocket
+                .advance(
+                    0.1,
+                    Some(Impact {
+                        fraction: 1.0,
+                        normal: [-1.0, 0.0, 0.0],
+                        player: false
+                    })
+                )
+                .unwrap(),
+            Some(ProjectileEvent::Explosion {
+                damage: 100.0,
+                radius: 1.2
+            })
+        );
+        gears.equip(Gear::Bomb).unwrap();
+        let mut bomb = BombTimer::new(
+            gears
+                .activate([0.0; 3], [1.0, 0.0, 0.0], UseMode::Primary)
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(bomb.advance(3.0).unwrap(), None);
+        assert_eq!(bomb.advance(1.0).unwrap(), Some(100.0));
+        assert_eq!(bomb.advance(1.0).unwrap(), None);
+    }
+}
