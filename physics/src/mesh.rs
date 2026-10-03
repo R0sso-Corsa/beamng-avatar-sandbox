@@ -445,6 +445,61 @@ impl Character {
         };
         self.step_mesh(input, &mesh.candidates(query))
     }
+    /// One translating support platform per fixed step. Host supplies its OLD
+    /// triangles and displacement; static triangles must have disjoint IDs.
+    /// Grounded velocity excludes carrier motion; airborne velocity includes
+    /// inherited carrier velocity after departure. No rotation or moving CCD.
+    pub fn step_translating_platform(
+        &mut self,
+        input: Input,
+        static_triangles: &[Triangle],
+        platform: &[Triangle],
+        displacement: Vec3,
+    ) -> Result<State, &'static str> {
+        if !finite(displacement) {
+            return Err("invalid platform displacement");
+        }
+        validate(platform)?;
+        validate(static_triangles)?;
+        let p = self.profile;
+        let slope = p.max_slope_degrees.to_radians().cos();
+        let riding = self.state.grounded
+            && platform.iter().any(|t| {
+                let (gap, n) = separation(p, self.state.position, *t);
+                gap.abs() < 0.002 && walkable(*t, n, slope)
+            });
+        let mut trial = self.clone();
+        let jumping = riding && input.jump && !self.jump_held;
+        let mut next = static_triangles.to_vec();
+        next.extend(platform.iter().map(|t| Triangle {
+            id: t.id,
+            vertices: t.vertices.map(|v| add(v, displacement)),
+        }));
+        validate(&next)?;
+        if riding {
+            let target = add(trial.state.position, displacement);
+            let carried = move_and_slide(p, trial.state.position, target, static_triangles)?;
+            if length(sub(carried, target)) > SKIN {
+                return Err("platform carry blocked by static geometry");
+            }
+            trial.state.position = carried;
+            trial.contacts.clear();
+        } else if platform.iter().any(|t| {
+            let moved = Triangle {
+                id: t.id,
+                vertices: t.vertices.map(|v| add(v, displacement)),
+            };
+            separation(p, trial.state.position, moved).0 < -SKIN
+        }) {
+            return Err("unsupported moving-platform collision");
+        }
+        trial.step_mesh(input, &next)?;
+        if riding && (jumping || !trial.state.grounded) {
+            trial.state.velocity = add(trial.state.velocity, scale(displacement, 1.0 / DT));
+        }
+        *self = trial;
+        Ok(self.state)
+    }
     /// Static mesh adapter around AVBD local tangent contacts, with a swept
     /// movement guard. This guard is kinematic; it is not an AVBD force solve.
     /// Failed queries leave character state unchanged; shallow overlaps recover.
@@ -880,5 +935,81 @@ mod tests {
             assert!(c.state.position[0] < 0.5);
             assert!((c.state.position[2] - p.height / 2.0).abs() < 0.003);
         }
+    }
+    #[test]
+    fn translating_support_rides_jumps_and_rejects_blocked_carry() {
+        let p = Profile::default();
+        let mut platform = Vec::new();
+        quad(
+            &mut platform,
+            [-2.0, -2.0, 0.0],
+            [2.0, -2.0, 0.0],
+            [2.0, 2.0, 0.0],
+            [-2.0, 2.0, 0.0],
+        );
+        let idle = Input {
+            movement: [0.0; 2],
+            jump: false,
+        };
+        let mut c = Character::new(p, [0.0, 0.0, p.height / 2.0 + SKIN]).unwrap();
+        c.step_mesh(idle, &platform).unwrap();
+        let delta = [0.002, 0.0, 0.001];
+        for _ in 0..240 {
+            c.step_translating_platform(idle, &[], &platform, delta)
+                .unwrap();
+            for t in &mut platform {
+                t.vertices = t.vertices.map(|v| add(v, delta));
+            }
+        }
+        assert!((c.state.position[0] - 0.48).abs() < 0.001);
+        assert!((c.state.position[2] - p.height / 2.0 - 0.24).abs() < 0.001);
+        assert!(c.state.grounded);
+        let s = c
+            .step_translating_platform(Input { jump: true, ..idle }, &[], &platform, delta)
+            .unwrap();
+        assert!(!s.grounded);
+        assert!((s.velocity[2] - (p.jump_speed - p.gravity * DT + delta[2] / DT)).abs() < 1e-6);
+        assert!(s.velocity[0] > 0.4);
+        for t in &mut platform {
+            t.vertices = t.vertices.map(|v| add(v, delta));
+        }
+        let z = c.state.position[2];
+        c.step_translating_platform(idle, &[], &platform, delta)
+            .unwrap();
+        assert!(c.state.position[2] > z);
+        let mut walker = Character::new(p, [0.0, 0.0, p.height / 2.0 + 0.24 + SKIN]).unwrap();
+        walker.step_mesh(idle, &platform).unwrap();
+        let mut left = false;
+        for _ in 0..180 {
+            let state = walker
+                .step_translating_platform(
+                    Input {
+                        movement: [1.0, 0.0],
+                        jump: false,
+                    },
+                    &[],
+                    &platform,
+                    [0.0; 3],
+                )
+                .unwrap();
+            left |= !state.grounded;
+        }
+        assert!(left && walker.state.position[0] > 3.0);
+        let mut blocked = Character::new(p, [0.31, 0.0, p.height / 2.0 + SKIN]).unwrap();
+        let floor = stair(0.2, None);
+        blocked.step_mesh(idle, &floor).unwrap();
+        let wall = Triangle { id: 100, ..wall() };
+        let before = blocked.state();
+        assert!(blocked
+            .step_translating_platform(idle, &[wall], &floor, [-0.1, 0.0, 0.0])
+            .is_err());
+        assert_eq!(blocked.state(), before);
+        assert!(blocked
+            .step_translating_platform(idle, &[], &floor, [f64::NAN, 0.0, 0.0])
+            .is_err());
+        assert_eq!(blocked.state(), before);
+        assert!(blocked
+            .step_translating_platform(idle, &floor, &floor, [0.0; 3])
+            .is_err());
     }
 }
