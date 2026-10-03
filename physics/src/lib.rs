@@ -49,6 +49,8 @@ pub struct Profile {
     /// Total upright capsule height, including both rounded caps.
     pub height: f64,
     pub max_slope_degrees: f64,
+    /// Gameplay stair limit in metres; zero disables stepping.
+    pub step_height: f64,
 }
 impl Default for Profile {
     fn default() -> Self {
@@ -64,6 +66,7 @@ impl Default for Profile {
             radius: 0.30,
             height: 1.53,
             max_slope_degrees: 45.0,
+            step_height: 0.30,
         }
     }
 }
@@ -126,6 +129,7 @@ impl Character {
             profile.jump_speed,
             profile.ground_acceleration,
             profile.air_acceleration,
+            profile.step_height,
         ];
         if !finite(position)
             || positive.iter().any(|v| !v.is_finite() || *v <= 0.0)
