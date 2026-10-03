@@ -1,7 +1,7 @@
 use avatar_physics::{Character, Input, Plane, Profile, DT};
 fn main() {
     let p = Profile::default();
-    let mut c = Character::new(p, [0.0, 0.0, p.radius]).unwrap();
+    let mut c = Character::new(p, [0.0, 0.0, p.height / 2.0]).unwrap();
     let floor = Plane {
         id: 1,
         normal: [0.0, 0.0, 1.0],
