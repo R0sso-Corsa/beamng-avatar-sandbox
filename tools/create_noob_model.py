@@ -11,7 +11,7 @@ OUT = ROOT / 'assets/source/noob_r6'
 # Metres; X right, Y back, Z up. Standing on Z=0, facing -Y.
 PARTS = [
     ('Torso', 'blue', (0, 0, .9), (.6, .3, .6)),
-    ('Head', 'yellow', (0, 0, 1.35), (.375, .375, .3)),
+    ('Head', 'yellow', (0, 0, 1.365), (.36, .36, .33)),
     ('LeftArm', 'yellow', (.45, 0, .9), (.3, .3, .6)),
     ('RightArm', 'yellow', (-.45, 0, .9), (.3, .3, .6)),
     ('LeftLeg', 'green', (.15, 0, .3), (.3, .3, .6)),
@@ -60,11 +60,11 @@ def main():
             segments = 64
             rim = .035
             rings = []
-            for centre_z, start in [(1.2+rim, -math.pi/2), (1.5-rim, 0)]:
+            for centre_z, start in [(1.2+rim, -math.pi/2), (1.53-rim, 0)]:
                 for j in range(7):
                     angle = start+j*math.pi/12
                     rings.append((centre_z+rim*math.sin(angle),
-                                  .1875-rim+rim*math.cos(angle)))
+                                  .18-rim+rim*math.cos(angle)))
             head_vertices = [(r*math.cos(i*math.tau/segments),
                               r*math.sin(i*math.tau/segments), z)
                              for z,r in rings for i in range(segments)]
@@ -81,16 +81,16 @@ def main():
             if args.face_texture:
                 # Preserve the image's aspect ratio in front projection. Curved
                 # strips follow the cylinder without stretching it across Head.
-                scale = .25 / max(width, height)
+                scale = .35 / max(width, height)
                 face_width, face_height = width*scale, height*scale
                 strips = 32
                 lines.append('usemtl roblox_face')
                 panel = []
                 for i in range(strips+1):
                     x = face_width*(i/strips-.5)
-                    y = -math.sqrt(.1875**2-x*x)-.002
+                    y = -math.sqrt(.18**2-x*x)-.002
                     for v in (0,1):
-                        panel.append((x,y,1.35+face_height*(v-.5)))
+                        panel.append((x,y,1.365+face_height*(v-.5)))
                         lines.append(f'vt {i/strips:.6f} {v}')
                 lines.extend('v ' + ' '.join(f'{v:.6f}' for v in point) for point in panel)
                 for i in range(strips):
@@ -101,12 +101,12 @@ def main():
             # Original smile geometry, grouped with Head so it follows the head.
             for x in (-.105, .105):
                 ring = [(x+.022*math.cos(a),
-                         -math.sqrt(.1875**2-(x+.022*math.cos(a))**2)-.002,
+                         -math.sqrt(.18**2-(x+.022*math.cos(a))**2)-.002,
                          1.39+.031*math.sin(a))
                         for a in (i*math.tau/12 for i in range(12))]
                 mesh(ring, [tuple(range(12))], 'face')
             outer = [(-.12+.24*i/12,
-                      -math.sqrt(.1875**2-(-.12+.24*i/12)**2)-.002,
+                      -math.sqrt(.18**2-(-.12+.24*i/12)**2)-.002,
                       1.285+.055*((i-6)/6)**2)
                      for i in range(13)]
             inner = [(x,y,z+.014) for x,y,z in outer]
@@ -134,11 +134,11 @@ def main():
         svg.append(f'<rect x="{x}" y="{y}" width="{size[0]*360}" height="{size[2]*360}"{rounding} fill="{colour}" stroke="#18202b" stroke-width="2"/>')
     if args.face_texture:
         data = base64.b64encode(texture).decode('ascii')
-        svg.append(f'<image x="{320-face_width*180}" y="{144-face_height*180}" width="{face_width*360}" height="{face_height*360}" preserveAspectRatio="xMidYMid meet" href="data:image/png;base64,{data}"/>')
+        svg.append(f'<image x="{320-face_width*180}" y="{138.6-face_height*180}" width="{face_width*360}" height="{face_height*360}" preserveAspectRatio="xMidYMid meet" href="data:image/png;base64,{data}"/>')
     else:
         svg.extend(['<g fill="#060606"><ellipse cx="282.2" cy="129.6" rx="7.92" ry="11.16"/><ellipse cx="357.8" cy="129.6" rx="7.92" ry="11.16"/></g>',
                     '<path d="M276.8 147.6 Q320 187.2 363.2 147.6" fill="none" stroke="#060606" stroke-width="5"/>'])
-    svg.extend(['<text x="320" y="678" text-anchor="middle" fill="#b8c5d5" font-family="sans-serif" font-size="16">Six separate parts · 1.5 m tall · front view</text>', '</svg>'])
+    svg.extend(['<text x="320" y="678" text-anchor="middle" fill="#b8c5d5" font-family="sans-serif" font-size="16">Six separate parts · 1.53 m tall · front view</text>', '</svg>'])
     (out / 'preview.svg').write_text('\n'.join(svg)+'\n')
     print(out)
 
