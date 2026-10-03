@@ -15,7 +15,7 @@ Research date: 3 October 2026. This is a behavioural recreation, not a reconstru
 | Measured jump rise | General_Scripter reported R6 root Y=3 to Y=10.26632976532 at JumpPower 50 in February 2020 [6] | 7.26633 studs is a comparison target, not an exact regression requirement |
 | Launch velocity | A June 2024 post reported approximately 53.1, with discussion about whether JumpPower denotes velocity [7] | Weak corroboration of ~53 studs/s; insufficient method/version detail |
 | Acceleration, braking, air control | Forum search largely found custom scripts, rather than repeatable native Humanoid measurements | 80 m/s² grounded and 20 m/s² airborne are provisional design values |
-| Mass, contact friction, step height, slope behaviour | No reliable universal Humanoid constants established in this research | 60 kg, 0.30 m sphere radius, 45° support threshold are provisional; friction and stepping pending |
+| Mass, contact friction, step height, slope behaviour | No reliable universal Humanoid constants established in this research | 60 kg, 0.30 m sphere radius, 45° support threshold are provisional; friction pending; 0.30 m stair limit is a project setting |
 
 The documented Humanoid properties describe an interface, not the entire controller. Do not equate JumpPower with an SI force or infer an internal force formula from its name. [1]
 
@@ -50,6 +50,7 @@ cargo test --manifest-path physics/Cargo.toml
 cargo run --manifest-path physics/Cargo.toml --example trajectory > trajectory.csv
 cargo run --manifest-path physics/Cargo.toml --example obstacle_course > course.csv
 cargo run --manifest-path physics/Cargo.toml --example mesh_course > mesh_course.csv
+cargo run --manifest-path physics/Cargo.toml --example stairs_course > stairs_course.csv
 ```
 
 `physics/src/lib.rs` is a dependency-free Rust library. `Character::step` advances exactly 1/240 second. Input is world-space XY; Z is up. Analog magnitude is preserved and diagonal speed is capped. Jump triggers on a press edge while supported, with no automatic repeat, coyote time or jump buffering.
@@ -82,12 +83,22 @@ Before BeamNG playability: verify a supported Rust loading/IPC mechanism on the 
 10. [SK8-ENGINE project](https://github.com/SK8-ENGINE/skate-3-rust-engine), inspected main `7ae67f269c024ed0b1aa945701e04fa5bf419848`
 11. [2010 Rust Rewrite Mashup](https://github.com/chasmlol/2010-rust-rewrite-mashup)
 
-The offline obstacle course is a four-second corridor/low-ceiling scenario with clearance assertions and CSV output. It uses infinite half-spaces; finite obstacles, stairs and map-mesh navigation remain pending.
+The offline obstacle course is a four-second corridor/low-ceiling scenario with clearance assertions and CSV output. It uses infinite half-spaces; finite obstacles and stairs now have offline prototypes; full map navigation remains pending.
 
 ## Finite mesh prototype
 
-`physics/src/mesh.rs` adds two-sided triangle queries using capsule-segment to filled-triangle distance, including face, edge and vertex regions. Conservative advancement limits translation by clearance/path length, with a 0.1 mm skin and 256-iteration budget. Sweep-and-slide retains contact normals at corners and allows five blocking contacts per move. Exhaustion or initial penetration returns an error, not an unchecked movement.
+`physics/src/mesh.rs` adds two-sided triangle queries using capsule-segment to filled-triangle distance, including face, edge and vertex regions. Conservative advancement uses the convex distance function’s supporting tangent and projected closing rate to bound translation, with a 0.1 mm skin and 256-iteration budget. Sweep-and-slide retains contact normals at corners and allows five blocking contacts per move. Exhaustion or initial penetration returns an error, not an unchecked movement.
 
-`Character::step_mesh` creates local tangent contacts for the AVBD step and guards the resulting translation using the mesh sweep. This final movement guard is kinematic, not an AVBD constraint-force solve. Position-derived velocity and mesh support are updated after sliding. Queries are transactional: errors preserve the previous character state. The API uses stable unique triangle IDs and rejects degenerate/nonfinite triangles. It scans every triangle; a spatial acceleration structure is required for map-scale use.
+`Character::step_mesh` creates local tangent contacts for the AVBD step and guards the resulting translation using the mesh sweep. This final movement guard is kinematic, not an AVBD constraint-force solve. Position-derived velocity and mesh support are updated after sliding. Queries are transactional: errors preserve the previous character state. The API uses stable unique triangle IDs and rejects degenerate/nonfinite triangles. Raw slice queries scan every triangle. `StaticMesh` now validates geometry once and caches a median-split bounding-volume tree for nearby candidate selection.
 
-`mesh_course` walks into a freestanding box, moves sideways and passes around it on a finite floor, with assertions and CSV output. Seven unit tests cover the combined core. This does not establish full map navigation: stairs, depenetration, moving surfaces, friction and robust seam/slope tuning remain pending. Tangent planes are local approximations for one fixed step; large meshes and adversarial geometry have not been validated. No BeamNG tests have been run.
+`mesh_course` walks into a freestanding box, moves sideways and passes around it on a finite floor, with assertions and CSV output. Ten unit tests cover the combined core. This does not establish full map navigation: depenetration, moving surfaces, friction and broader seam/slope validation remain pending. Tangent planes are local approximations for one fixed step; large meshes and adversarial geometry have not been validated. No BeamNG tests have been run.
+
+## Stairs, slope support and indexed geometry
+
+The mesh adapter tries a swept up/forward/down path when grounded movement hits a steep obstruction. `Profile.step_height` defaults to 0.30 m; zero disables this optional stair rule. Landing must touch a walkable triangle and improve forward progress. Adjacent riser/tread triangles can share an edge, so landing support is checked across nearby triangles rather than relying on whichever triangle wins an equal-time hit. Ceiling sweeps remain mandatory. The discrete stair lift does not become vertical launch velocity.
+
+Walkable support uses the triangle face slope and an upward capsule contact normal, including a rounded tread edge. A short 3 cm downward probe maintains support over small separations and descending slopes; it does not snap across stair-sized drops. Mesh AVBD tangent contacts cover walkable support; steep walls and ceilings are handled by the kinematic swept guard. This remains a gameplay controller around an AVBD subset, not a fully dynamic articulated body.
+
+`StaticMesh::new` validates unique IDs and builds a cached AABB tree. Use `Character::step_static_mesh` for indexed geometry; its conservative query envelope includes the capsule, current velocity, motor/jump travel, gravity, stair probes and ground snap. Rebuild the immutable mesh when geometry changes. Candidate triangles retain source ordering so equal-hit selection does not change just because indexing is enabled. Whole BeamNG map performance has not been measured.
+
+Offline checks now include three 15 cm risers, a 20 cm step, rejection of a 65 cm obstacle and a low ceiling, continuous grounding across a 20-degree ramp seam, and no jump support on a 60-degree face. An index regression selects one candidate from 1,000 separated triangles and matches the raw simulation. These checks establish those fixtures only; arbitrary stair dimensions, concave seams, descending stairs, friction, recovery from initial overlaps and moving geometry still need work. Roblox movement calibration and BeamNG integration remain untested.
