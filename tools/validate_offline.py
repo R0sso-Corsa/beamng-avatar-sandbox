@@ -29,5 +29,7 @@ if __name__=='__main__':
  if args.private_assets:
   run(sys.executable,'tests/r6_animation_smoke.py')
   run(sys.executable,'tests/native_animation_smoke.py')
+  if (ROOT/'assets/private/r6_animator_capture.json').exists() and (ROOT/'assets/private/r6_climb_audit.json').exists():
+   run(sys.executable,'tests/studio_animation_parity.py')
  run(sys.executable,'tools/package_mod.py')
  print('Offline validation passed. This does not establish game compatibility.')

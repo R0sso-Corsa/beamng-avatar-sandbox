@@ -17,6 +17,8 @@ lib.avatar_destroy.argtypes=[C.c_uint64]
 lib.avatar_track_upload_v1.argtypes=[C.c_uint64,C.c_uint64,C.POINTER(Key),C.c_uint32]
 lib.avatar_track_sample_v1.argtypes=[C.c_uint64,C.c_uint64,C.c_double,C.c_double,C.POINTER(Pose)]
 capture=json.loads((root/'assets/private/r6_animator_capture.json').read_text())
+dense=json.loads((root/'assets/private/r6_climb_audit.json').read_text())
+capture['clips'].append({'name':'climb','scope':'dense left arm','samples':[{'time':s['time'],'poses':{'Left Arm':s['animator']}} for s in dense['samples']]})
 handle=lib.avatar_create(0,0,1);assert handle
 report={'studioVersion':capture['studioVersion'],'method':capture['method'],'clips':[]}
 try:
@@ -26,16 +28,17 @@ try:
   for index,(path,keys) in enumerate(clip['tracks'].items()):
    part=path.split('/')[-1]
    if part=='HumanoidRootPart':continue
-   array=(Key*len(keys))(*[Key(k['time'],Pose((C.c_double*3)(*k['translation']),(C.c_double*4)(*k['rotation'])),0) for k in keys])
+   array=(Key*len(keys))(*[Key(k['time'],Pose((C.c_double*3)(*k['translation']),(C.c_double*4)(*k['rotation'])),2) for k in keys])
    assert lib.avatar_track_upload_v1(handle,index,array,len(keys))==0
    for sample in source['samples']:
+    if part not in sample['poses']:continue
     actual=sample['poses'][part];pose=Pose()
     assert lib.avatar_track_sample_v1(handle,index,sample['time'],0,C.byref(pose))==0
     q=conversion.quaternion(actual[3:]);dot=abs(sum(a*b for a,b in zip(q,pose.rotation)))
     angle=2*math.acos(min(1.0,dot))
     error=max(abs(a-b) for a,b in zip(actual[:3],pose.translation))
     maximum_translation=max(maximum_translation,error);maximum_angle=max(maximum_angle,angle);count+=1
-  entry={'name':source['name'],'samples':count,'maxTranslationErrorStuds':maximum_translation,'maxRotationErrorRadians':maximum_angle,
+  entry={'scope':source.get('scope','six joints'), 'name':source['name'],'samples':count,'maxTranslationErrorStuds':maximum_translation,'maxRotationErrorRadians':maximum_angle,
          'passesTolerance':maximum_translation<1e-4 and maximum_angle<1e-3}
   report['clips'].append(entry);print(entry)
 finally:assert lib.avatar_destroy(handle)==0

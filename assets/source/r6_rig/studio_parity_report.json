@@ -3,6 +3,7 @@
   "method": "Animator.StepAnimations edit-mode evaluation",
   "clips": [
     {
+      "scope": "six joints",
       "name": "idle1",
       "samples": 30,
       "maxTranslationErrorStuds": 7.06195830979528e-10,
@@ -10,38 +11,51 @@
       "passesTolerance": true
     },
     {
+      "scope": "six joints",
       "name": "jump",
       "samples": 30,
       "maxTranslationErrorStuds": 4.134104251860005e-06,
-      "maxRotationErrorRadians": 0.00016105537896592863,
+      "maxRotationErrorRadians": 0.00015423374752575225,
       "passesTolerance": true
     },
     {
+      "scope": "six joints",
       "name": "climb",
       "samples": 30,
       "maxTranslationErrorStuds": 4.3696296359030384e-08,
-      "maxRotationErrorRadians": 0.008181062660984806,
-      "passesTolerance": false
+      "maxRotationErrorRadians": 0.00017433294601472098,
+      "passesTolerance": true
     },
     {
+      "scope": "six joints",
       "name": "fall",
       "samples": 30,
       "maxTranslationErrorStuds": 1.41985869728245e-08,
-      "maxRotationErrorRadians": 0.00010596034148813982,
+      "maxRotationErrorRadians": 0.00010596624237698875,
       "passesTolerance": true
     },
     {
+      "scope": "six joints",
       "name": "idle2",
       "samples": 30,
       "maxTranslationErrorStuds": 1.7010498031314568e-12,
-      "maxRotationErrorRadians": 0.00012036345967608119,
+      "maxRotationErrorRadians": 0.00012036346336564948,
       "passesTolerance": true
     },
     {
+      "scope": "six joints",
       "name": "walk",
       "samples": 30,
       "maxTranslationErrorStuds": 7.881274968632446e-06,
-      "maxRotationErrorRadians": 0.00027273196057503544,
+      "maxRotationErrorRadians": 0.0002706774108155745,
+      "passesTolerance": true
+    },
+    {
+      "scope": "dense left arm",
+      "name": "climb",
+      "samples": 91,
+      "maxTranslationErrorStuds": 7.772012631385161e-08,
+      "maxRotationErrorRadians": 9.902527404140871e-05,
       "passesTolerance": true
     }
   ]

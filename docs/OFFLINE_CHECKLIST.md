@@ -36,7 +36,7 @@ This is the current offline backlog, not a promise that every possible future fe
 - [x] Capture the default R6 Motor6D C0/C1 offsets in installed Studio.
 - [x] Confirm omitted legacy easing defaults in Studio and all six clips' easing styles.
 - [x] Capture edit-mode Animator evaluations of all six clips at five timestamps.
-- [ ] Resolve the climb rotation mismatch before claiming sampler parity.
+- [x] Resolve the climb rotation mismatch for captured samples; all 271 Studio comparisons pass unchanged tolerances.
 - [ ] Verify normal runtime playback and foot contact; edit-mode evaluation is not a gameplay test.
 - [ ] Validate target axis alignments, rig deformation and feet placement visually.
 - [ ] Capture movement traces to calibrate walking, braking, air control and jumps.

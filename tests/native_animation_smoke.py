@@ -19,7 +19,7 @@ try:
  for name in ['idle1','idle2','walk','jump','fall','climb']:
   clip=json.loads((root/f'assets/private/r6_animations/{name}.json').read_text())
   for index,keys in enumerate(clip['tracks'].values()):
-   array=(Key*len(keys))(*[Key(k['time'],Pose((C.c_double*3)(*k['translation']),(C.c_double*4)(*k['rotation'])),0) for k in keys])
+   array=(Key*len(keys))(*[Key(k['time'],Pose((C.c_double*3)(*k['translation']),(C.c_double*4)(*k['rotation'])),2) for k in keys])
    assert lib.avatar_track_upload_v1(handle,index,array,len(keys))==0
    for key in keys:
     out=Pose();assert lib.avatar_track_sample_v1(handle,index,key['time'],0,C.byref(out))==0

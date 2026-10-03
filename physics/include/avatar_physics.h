@@ -90,7 +90,7 @@ typedef struct { double time; AvatarPoseV1 pose; uint32_t interpolation; } Avata
 typedef struct { uint32_t active, grounded, jumped, climbing; double speed; } AvatarMotionV1;
 typedef struct { uint32_t active, clip, changed; double time, rate, blend_seconds; } AvatarSelectionV1;
 /* Up to 64 tracks/handle, 10000 keys/track. IDs supplied by host. Upload is atomic.
-   interpolation: 0 linear, 1 hold; duration=0 nonlooping, else valid loop duration.
+   interpolation: 0 quaternion slerp, 1 hold, 2 observed R6 rotation-vector linear; duration=0 nonlooping, else valid loop duration.
    Source pose axes/units are preserved; host maps track IDs to bones. */
 int32_t avatar_track_upload_v1(uint64_t handle, uint64_t id, const AvatarKeyV1 *keys, uint32_t count);
 int32_t avatar_track_sample_v1(uint64_t handle, uint64_t id, double time, double duration, AvatarPoseV1 *out);

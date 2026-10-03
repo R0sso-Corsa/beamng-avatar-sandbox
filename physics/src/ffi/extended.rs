@@ -48,6 +48,7 @@ pub unsafe extern "C" fn avatar_track_upload_v1(
         let interpolation = match k.interpolation {
             0 => Interpolation::Linear,
             1 => Interpolation::Hold,
+            2 => Interpolation::RobloxLinear,
             _ => return -2,
         };
         converted.push(Key {

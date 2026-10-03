@@ -46,6 +46,8 @@ impl Pose {
 }
 #[derive(Clone, Copy)]
 pub enum Interpolation {
+    /// Absolute principal rotation-vector interpolation observed in R6 Animator.
+    RobloxLinear,
     Linear,
     Hold,
 }
@@ -92,7 +94,12 @@ impl Track {
             return Ok(a.pose);
         }
         let b = self.keys[upper];
-        a.pose.blend(b.pose, (time - a.time) / (b.time - a.time))
+        let amount = (time - a.time) / (b.time - a.time);
+        if matches!(a.interpolation, Interpolation::RobloxLinear) {
+            a.pose.roblox_blend(b.pose, amount)
+        } else {
+            a.pose.blend(b.pose, amount)
+        }
     }
 }
 #[cfg(test)]
@@ -278,5 +285,69 @@ mod retarget_tests {
             translation: [0.0; 3],
             ..p
         }
+    }
+}
+
+impl Pose {
+    /// Principal axis-angle vector lerp. Keep separate from generic slerp blending.
+    /// Captured R6 clips validate this choice; not a universal Roblox engine claim.
+    pub fn roblox_blend(self, other: Self, amount: f64) -> Result<Self, &'static str> {
+        // Reuse validation and translation interpolation; replace rotation only.
+        let mut result = self.blend(other, amount)?;
+        fn vector(mut q: [f64; 4]) -> [f64; 3] {
+            if q[3] < 0.0 {
+                q = q.map(|v| -v);
+            }
+            let length = q[..3].iter().map(|v| v * v).sum::<f64>().sqrt();
+            if length < 1e-12 {
+                return [0.0; 3];
+            }
+            let angle = 2.0 * length.atan2(q[3]);
+            std::array::from_fn(|i| q[i] * angle / length)
+        }
+        let a = vector(self.rotation);
+        let b = vector(other.rotation);
+        let v: [f64; 3] = std::array::from_fn(|i| a[i] * (1.0 - amount) + b[i] * amount);
+        let angle = v.iter().map(|x| x * x).sum::<f64>().sqrt();
+        result.rotation = if angle < 1e-12 {
+            [0.0, 0.0, 0.0, 1.0]
+        } else {
+            [
+                v[0] * (angle / 2.0).sin() / angle,
+                v[1] * (angle / 2.0).sin() / angle,
+                v[2] * (angle / 2.0).sin() / angle,
+                (angle / 2.0).cos(),
+            ]
+        };
+        Ok(result)
+    }
+}
+
+#[cfg(test)]
+mod roblox_rotation_tests {
+    use super::*;
+    #[test]
+    fn principal_vector_endpoints_and_antipodal_identity() {
+        let a = Pose::IDENTITY;
+        let b = Pose {
+            rotation: [0.0, 0.0, 1.0, 0.0],
+            ..a
+        };
+        let mid = a.roblox_blend(b, 0.5).unwrap();
+        assert!((mid.rotation[2] - 0.5_f64.sqrt()).abs() < 1e-10);
+        assert_eq!(a.roblox_blend(a, 0.2).unwrap().rotation, a.rotation);
+        assert_eq!(
+            a.roblox_blend(
+                Pose {
+                    rotation: [0.0, 0.0, 0.0, -1.0],
+                    ..a
+                },
+                0.2
+            )
+            .unwrap()
+            .rotation,
+            a.rotation
+        );
+        assert!(a.roblox_blend(b, f64::NAN).is_err());
     }
 }

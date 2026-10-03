@@ -72,7 +72,7 @@ def rust_source(clip):
     for keys in clip['tracks'].values():
         text.append('Track::new(vec![')
         for k in keys:
-            text.append('Key {time:'+repr(k['time'])+',pose:Pose {translation:'+repr(k['translation'])+',rotation:'+repr(k['rotation'])+'},interpolation:Interpolation::Linear},')
+            text.append('Key {time:'+repr(k['time'])+',pose:Pose {translation:'+repr(k['translation'])+',rotation:'+repr(k['rotation'])+'},interpolation:Interpolation::RobloxLinear},')
         text.append(']).unwrap(),')
     text+= ['] }','fn main() {',f'let duration={clip["duration"]!r};',
              'for track in tracks() { for i in 0..=240 { let pose=track.sample(duration*i as f64/240.0,None).unwrap(); assert!(pose.rotation.iter().all(|v| v.is_finite())); } }','}']

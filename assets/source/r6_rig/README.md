@@ -52,3 +52,11 @@ A walk keyframe at 0.15873000025749207 seconds was applied to a local reference 
 `tests/studio_animation_parity.py` compares captured transforms to the compiled Rust sampler. Five clips pass thresholds of 0.0001 studs and 0.001 radians across 30 joint samples each. Climb fails the strict rotation threshold: maximum difference 0.008181 radians (about 0.47 degrees), despite negligible translation differences. Normalized quaternion lerp was also checked and did not improve the discrepancy, so the sampler was not changed without evidence. `studio_parity_report.json` records the discrepancy; the strict audit currently exits nonzero. It is intentionally separate from the passing general offline suite.
 
 Next: capture more climb timestamps, inspect legacy rotation interpolation, then validate source-to-target bone alignment/skinning. No exact Roblox rotation parity or downloaded-rig deformation acceptance is claimed.
+
+## Climb mismatch resolved for captured samples
+
+The earlier strict audit failure is now resolved for the recorded samples. A separate Studio command, `tools/roblox/audit_climb_interpolation.lua`, captured 91 left-arm timestamps and compared Animator output to CFrame:Lerp. End keys matched, but mid-interval Animator rotations differed from CFrame:Lerp. Absolute principal rotation-vector interpolation fit the captured Animator output. This is empirical evidence for these legacy R6 clips, not a claim about all Roblox animation modes.
+
+Rust now offers `Interpolation::RobloxLinear` separately from generic quaternion slerp; C upload interpolation value 2 selects it. The converter's generated Rust source selects this mode for original R6 linear clips. Generic pose blending continues to use quaternion slerp. Principal rotation vectors can have discontinuities at pi; broader custom clip coverage is still required.
+
+The strict parity audit now passes all 180 original six-joint samples and all 91 dense climb left-arm samples (271 total). Thresholds remain 0.0001 studs and 0.001 radians; they were not loosened. The private-assets validation runner includes this audit when both local Studio captures are present. Source/target frame retargeting and downloaded-rig skinning remain separate, unverified steps.

@@ -212,4 +212,4 @@ See [the complete offline checklist](docs/OFFLINE_CHECKLIST.md) for remaining lo
 - [ ] Validate actual playback, feet clearance and downloaded rig deformation before accepting the retarget.
 
 - [x] Evaluate six real AnimationTracks in Studio edit mode and compare 180 joint samples against Rust.
-- [ ] Resolve climb rotation mismatch (0.008181 radians maximum); five other clips pass strict comparison.
+- [x] Resolve captured climb rotation mismatch using separate R6 rotation-vector interpolation; all 271 recorded samples pass strict comparison.
