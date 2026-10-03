@@ -188,3 +188,7 @@ See [rig mapping and export workflow](assets/source/r6_rig/README.md). No origin
 - [x] Decode all six source assets offline and convert local pose tracks to JSON/quaternions.
 - [x] Compile/sample every converted clip through the Rust sampler offline.
 - [ ] Capture original Motor6D rest offsets and resolve idle path variants before retargeting.
+
+- [x] Normalize legacy torso-only idle paths; reject duplicate/conflicting key times.
+- [x] Add Rust rigid-pose retargeting with bind preservation and joint-pivot tests.
+- [ ] Supply verified source C1 offsets and per-bone axis alignments; validate applied clips visually.

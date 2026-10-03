@@ -11,12 +11,22 @@ with tempfile.TemporaryDirectory() as temp:
  temp=Path(temp)
  for name in ['idle1','idle2','walk','jump','fall','climb']:
   clip=module.convert(root/f'assets/private/r6_animations/{name}.rbxmx')
-  assert clip['duration']>0 and len(clip['tracks'])>=7
+  assert clip['duration']>0 and len(clip['tracks'])==7
   assert all(path.split('/')[-1] in module.PARTS for path in clip['tracks'])
   source=temp/f'{name}.rs';source.write_text(module.rust_source(clip))
   binary=temp/name
   subprocess.run(['rustc','--edition=2021',str(source),'--extern',f'avatar_physics={root}/physics/target/debug/libavatar_physics.rlib','-L',f'dependency={root}/physics/target/debug/deps','-o',str(binary)],check=True)
   subprocess.run([str(binary)],check=True)
+ # A root-prefixed and torso-only key at the same time must not overwrite.
+ import xml.etree.ElementTree as ET
+ import copy
+ tree=ET.parse(root/'assets/private/r6_animations/idle1.rbxmx')
+ sequence=tree.find(".//Item[@class='KeyframeSequence']")
+ sequence.append(copy.deepcopy(sequence.find("./Item[@class='Keyframe']")))
+ collision=temp/'collision.xml';tree.write(collision)
+ try:module.convert(collision)
+ except ValueError:pass
+ else:raise AssertionError('Duplicate keys accepted')
  invalid=temp/'invalid.xml';invalid.write_text('<!DOCTYPE x><roblox/>')
  try:module.convert(invalid)
  except ValueError:pass

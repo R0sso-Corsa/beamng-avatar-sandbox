@@ -39,14 +39,18 @@ def convert(path):
             props=properties(pose);name=value(props,'Name','')
             if name not in PARTS:raise ValueError('Unknown R6 part '+name)
             path=parent+'/'+name
+            # Legacy R6 clips sometimes omit the root pose in later frames.
+            if path == '/Torso': path='/HumanoidRootPart/Torso'
             cf=props.get('CFrame')
-            if cf is None: numbers=[0,0,0,1,0,0,0,1,0,0,0,1]
+            if cf is None: numbers=[0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0]
             else:numbers=[float(cf.findtext(k)) for k in ['X','Y','Z','R00','R01','R02','R10','R11','R12','R20','R21','R22']]
             if not all(math.isfinite(x) for x in numbers):raise ValueError('Nonfinite pose')
             m=numbers[3:]
             for i in range(3):
                 for j in range(3):
                     if abs(sum(m[i*3+k]*m[j*3+k] for k in range(3))-(i==j))>1e-3:raise ValueError('Nonorthogonal rotation')
+            det=m[0]*(m[4]*m[8]-m[5]*m[7])-m[1]*(m[3]*m[8]-m[5]*m[6])+m[2]*(m[3]*m[7]-m[4]*m[6])
+            if abs(det-1.0)>1e-3:raise ValueError('Reflection is not a rotation')
             weight=float(value(props,'Weight','1'));style=int(value(props,'EasingStyle','0'))
             if weight!=1 or style!=0:raise ValueError('Unsupported weight/easing; export/bake in Studio')
             tracks.setdefault(path,[]).append({'time':time,'translation':numbers[:3], 'rotation':quaternion(m),

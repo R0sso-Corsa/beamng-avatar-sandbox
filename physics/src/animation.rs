@@ -150,3 +150,133 @@ mod tests {
         assert_eq!(hold.sample(0.5, None).unwrap().translation, a.translation);
     }
 }
+
+fn multiply(a: [f64; 4], b: [f64; 4]) -> [f64; 4] {
+    let [x, y, z, w] = a;
+    let [i, j, k, l] = b;
+    [
+        w * i + x * l + y * k - z * j,
+        w * j - x * k + y * l + z * i,
+        w * k + x * j - y * i + z * l,
+        w * l - x * i - y * j - z * k,
+    ]
+}
+fn rotate(q: [f64; 4], v: [f64; 3]) -> [f64; 3] {
+    let r = multiply(
+        multiply(q, [v[0], v[1], v[2], 0.0]),
+        [-q[0], -q[1], -q[2], q[3]],
+    );
+    [r[0], r[1], r[2]]
+}
+impl Pose {
+    pub const IDENTITY: Self = Self {
+        translation: [0.0; 3],
+        rotation: [0.0, 0.0, 0.0, 1.0],
+    };
+    /// Rigid transform multiplication, parent * child (no scale/shear).
+    pub fn compose(self, child: Self) -> Result<Self, &'static str> {
+        if !self.valid() || !child.valid() {
+            return Err("invalid rigid transform");
+        }
+        let offset = rotate(self.rotation, child.translation);
+        let mut rotation = multiply(self.rotation, child.rotation);
+        let norm = rotation.iter().map(|v| v * v).sum::<f64>().sqrt();
+        rotation = rotation.map(|v| v / norm);
+        let result = Self {
+            translation: std::array::from_fn(|i| self.translation[i] + offset[i]),
+            rotation,
+        };
+        if !result.valid() {
+            return Err("rigid transform overflow");
+        }
+        Ok(result)
+    }
+    pub fn inverse(self) -> Result<Self, &'static str> {
+        if !self.valid() {
+            return Err("invalid rigid transform");
+        }
+        let rotation = [
+            -self.rotation[0],
+            -self.rotation[1],
+            -self.rotation[2],
+            self.rotation[3],
+        ];
+        Ok(Self {
+            translation: rotate(rotation, self.translation.map(|v| -v)),
+            rotation,
+        })
+    }
+}
+/// Applies a Roblox Motor6D pose to a target bone's local rest transform.
+/// C1/pose translation must already share target units. Alignment maps source
+/// child-part axes into target bone axes; it is a pure rotation, supplied by host.
+/// Preserves target bind pose for identity input; does not guess source offsets.
+pub fn retarget(
+    target_bind: Pose,
+    source_c1: Pose,
+    alignment: Pose,
+    delta: Pose,
+) -> Result<Pose, &'static str> {
+    if alignment.translation != [0.0; 3] {
+        return Err("alignment must be a pure rotation");
+    }
+    let local_delta = source_c1.compose(delta)?.compose(source_c1.inverse()?)?;
+    target_bind
+        .compose(alignment)?
+        .compose(local_delta)?
+        .compose(alignment.inverse()?)
+}
+#[cfg(test)]
+mod retarget_tests {
+    use super::*;
+    fn close(a: Pose, b: Pose) {
+        for (x, y) in a.translation.iter().zip(b.translation) {
+            assert!((x - y).abs() < 1e-9);
+        }
+        let dot = a
+            .rotation
+            .iter()
+            .zip(b.rotation)
+            .map(|(x, y)| x * y)
+            .sum::<f64>();
+        assert!((dot.abs() - 1.0).abs() < 1e-9);
+    }
+    #[test]
+    fn bind_preservation_inverse_and_joint_pivot() {
+        let bind = Pose {
+            translation: [1.0, 2.0, 3.0],
+            rotation: [0.0, 0.0, 0.5_f64.sqrt(), 0.5_f64.sqrt()],
+        };
+        close(
+            bind.compose(bind.inverse().unwrap()).unwrap(),
+            Pose::IDENTITY,
+        );
+        let c1 = Pose {
+            translation: [1.0, 0.0, 0.0],
+            ..Pose::IDENTITY
+        };
+        close(
+            retarget(bind, c1, bind_with_rotation(bind), Pose::IDENTITY).unwrap(),
+            bind,
+        );
+        let halfturn = Pose {
+            rotation: [0.0, 0.0, 1.0, 0.0],
+            ..Pose::IDENTITY
+        };
+        let result = retarget(Pose::IDENTITY, c1, Pose::IDENTITY, halfturn).unwrap();
+        close(
+            result,
+            Pose {
+                translation: [2.0, 0.0, 0.0],
+                ..halfturn
+            },
+        );
+        assert!(retarget(bind, c1, bind, halfturn).is_err());
+    }
+    fn bind_with_rotation(p: Pose) -> Pose {
+        Pose {
+            translation: [0.0; 3],
+            ..p
+        }
+    }
+}
