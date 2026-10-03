@@ -102,3 +102,8 @@ R15, additional animation states, custom animation packs, layered clothing, dyna
 - [ ] Verify BeamNG native loading and host collision/rendering integration.
 
 See [cross-game support](docs/CROSS_GAME_SUPPORT.md) for the contract and runnable host check.
+
+- [x] Research BeamNG native-loading constraints and add a read-only GE capability inventory.
+- [ ] Run the inventory on an installed BeamNG build and validate host APIs.
+
+See [BeamNG integration](docs/BEAMNG_INTEGRATION.md) for runtime gates and console commands.
