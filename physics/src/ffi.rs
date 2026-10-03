@@ -218,6 +218,56 @@ pub extern "C" fn avatar_step(handle: u64, movement_x: f64, movement_y: f64, jum
         Err(_) => -2,
     }
 }
+/// Step against the uploaded static mesh and one prescribed translating platform.
+/// # Safety
+/// Nonzero count requires an aligned readable array of count AvatarTriangles,
+/// valid and unmodified throughout the call. Triangles describe the OLD pose.
+#[no_mangle]
+pub unsafe extern "C" fn avatar_step_platform_v1(
+    handle: u64,
+    movement_x: f64,
+    movement_y: f64,
+    jump: u32,
+    platform: *const AvatarTriangle,
+    count: u32,
+    displacement_x: f64,
+    displacement_y: f64,
+    displacement_z: f64,
+) -> i32 {
+    if jump > 1 || count > 1_000_000 || (count > 0 && platform.is_null()) {
+        return -2;
+    }
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(instance) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    let source = if count == 0 {
+        &[][..]
+    } else {
+        unsafe { std::slice::from_raw_parts(platform, count as usize) }
+    };
+    let triangles: Vec<Triangle> = source
+        .iter()
+        .map(|t| Triangle {
+            id: t.id,
+            vertices: t.vertices,
+        })
+        .collect();
+    match instance.character.step_translating_platform(
+        Input {
+            movement: [movement_x, movement_y],
+            jump: jump == 1,
+        },
+        instance.mesh.triangles(),
+        &triangles,
+        [displacement_x, displacement_y, displacement_z],
+    ) {
+        Ok(_) => 0,
+        Err(_) => -2,
+    }
+}
 /// # Safety
 /// out must point to one aligned, writable AvatarState for the duration of the call.
 #[no_mangle]

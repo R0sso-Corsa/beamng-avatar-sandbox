@@ -120,6 +120,9 @@ pub struct StaticMesh {
     root: Option<Node>,
 }
 impl StaticMesh {
+    pub(crate) fn triangles(&self) -> &[Triangle] {
+        &self.triangles
+    }
     pub fn new(triangles: Vec<Triangle>) -> Result<Self, &'static str> {
         validate(&triangles)?;
         let bounds: Vec<_> = triangles.iter().map(|t| Bounds::triangle(*t)).collect();
