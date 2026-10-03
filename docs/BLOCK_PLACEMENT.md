@@ -1,3 +1,5 @@
+> Portability update: camera and building-plan logic now live in Rust (`physics/src/camera.rs`, `physics/src/building.rs`) and are exposed through the C ABI. Lua camera/building/placement files are backend facades and cannot run standalone. Earlier Lua implementation descriptions below are historical; engine integration remains pending.
+
 # Offline block placement plan
 
 `mod/lua/ge/extensions/avatarSandbox/placement.lua` is a pure GE Lua planning extension. It creates no scene objects, previews or collision. Load with `extensions.load("avatarSandbox_placement")` for future host integration.
