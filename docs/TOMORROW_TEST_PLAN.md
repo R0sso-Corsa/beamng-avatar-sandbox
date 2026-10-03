@@ -44,6 +44,10 @@ Run `python tools/validate_offline.py` with Cargo, C compiler, Node and Python+l
 
 ## Deferred until the basic player works
 
-Gears/projectile effects need host collision/damage/rendering and a C transport. Catalogue validation is Rust-only and needs native bindings plus authenticated BeamMP events. Dynamic geometry, rotating platforms, articulated AVBD, broad map benchmarks and network authority are not solved by the install ZIP. Avoid building multiplayer or avatar selection around an unverified renderer.
+Gear equip/use/cooldown/reset commands now have C transport; projectile effects still need host collision/damage/rendering. Catalogue validation is Rust-only and needs native bindings plus authenticated BeamMP events. Dynamic geometry, rotating platforms, articulated AVBD, broad map benchmarks and network authority are not solved by the install ZIP. Avoid building multiplayer or avatar selection around an unverified renderer.
 
 Record each gate as pass/fail with game version, logs, reproduction steps and a screenshot. Do not mark roadmap gameplay milestones complete solely from offline checks.
+
+## Additional native interfaces
+
+The C header now includes rigid pose blend/retarget operations and gear equip, activation, cooldown advance and reset. The external macOS C host verifies success, invalid pose input, rocket command flags, cooldown rejection/recovery and building-tools opt-in/removal. These are commands and transforms only; they do not load clips, render a rig, execute damage, or provide multiplayer authority. Catalogue, clip upload/sampling and animation-state C transport remain pending.

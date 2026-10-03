@@ -62,6 +62,30 @@ int32_t avatar_driver_reset_v1(uint64_t handle);
    count/status are written on success only; pointers must be disjoint. */
 int32_t avatar_driver_batch_v1(uint64_t handle, double dt, AvatarInputV1 *output,
     uint32_t *count, AvatarDriverStatusV1 *status);
+typedef struct { double translation[3]; double rotation[4]; } AvatarPoseV1;
+/* Quaternion x,y,z,w; unit length. Translation units must match. */
+int32_t avatar_pose_blend_v1(const AvatarPoseV1 *a, const AvatarPoseV1 *b, double amount, AvatarPoseV1 *out);
+int32_t avatar_pose_retarget_v1(const AvatarPoseV1 *bind, const AvatarPoseV1 *c1,
+    const AvatarPoseV1 *alignment, const AvatarPoseV1 *delta, AvatarPoseV1 *out);
+/* effect: 0 melee, 1 projectile, 2 wall, 3 bomb, 4 place, 5 remove.
+   flags: bit 0 speed present, bit 1 gravity factor present, bit 2 radius present.
+   No effects are executed by this API; host owns collision/damage/rendering. */
+typedef struct {
+    uint32_t gear, effect, flags;
+    double origin[3], direction[3], damage, speed, gravity_factor,
+        bounce_damage_factor, explosion_radius, fuse_seconds, wall_size[3];
+    uint64_t block_id;
+} AvatarGearCommandV1;
+/* gear: 0 sword, 1 slingshot, 2 rocket, 3 trowel, 4 bomb, 5 superball,
+   6 paintball, 7 building tools (default disabled). */
+int32_t avatar_gear_equip_v1(uint64_t handle, uint32_t gear);
+int32_t avatar_gear_building_enabled_v1(uint64_t handle, uint32_t enabled);
+int32_t avatar_gear_advance_v1(uint64_t handle, double seconds);
+int32_t avatar_gear_reset_v1(uint64_t handle);
+/* mode: 0 primary, 1 sword lunge, 2 remove block. Cooldown commits on success.
+   Reset on mode exit/unload; commands must not be replayed on a host failure. */
+int32_t avatar_gear_activate_v1(uint64_t handle, const double origin[3],
+    const double direction[3], uint32_t mode, uint64_t block_id, AvatarGearCommandV1 *out);
 uint32_t avatar_abi_version(void);
 int32_t avatar_default_profile_v1(AvatarProfileV1 *out);
 uint64_t avatar_create_with_profile_v1(const AvatarProfileV1 *profile, double x, double y, double z);

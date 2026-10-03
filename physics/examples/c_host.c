@@ -98,6 +98,24 @@ int main(void) {
     assert(avatar_driver_reset_v1(avatar)==0);
     assert(avatar_destroy(avatar)==0);
     assert(avatar_driver_heading_v1(avatar,0)==-1);
+    AvatarPoseV1 identity={{0,0,0},{0,0,0,1}}, pose;
+    assert(avatar_pose_blend_v1(&identity,&identity,0.5,&pose)==0 && pose.rotation[3]==1);
+    assert(avatar_pose_blend_v1(&identity,&identity,NAN,&pose)==-2);
+    assert(avatar_pose_retarget_v1(&identity,&identity,&identity,&identity,&pose)==0);
+    avatar=avatar_create(0,0,1);
+    AvatarGearCommandV1 command; double origin[3]={0,0,1}, direction[3]={0,1,0};
+    assert(avatar_gear_equip_v1(avatar,7)==-2);
+    assert(avatar_gear_equip_v1(avatar,2)==0);
+    assert(avatar_gear_activate_v1(avatar,origin,direction,0,0,&command)==0);
+    assert(command.effect==1 && command.flags==7 && command.speed==18);
+    assert(avatar_gear_activate_v1(avatar,origin,direction,0,0,&command)==-2);
+    assert(avatar_gear_advance_v1(avatar,7)==0);
+    assert(avatar_gear_activate_v1(avatar,origin,direction,0,0,&command)==0);
+    assert(avatar_gear_reset_v1(avatar)==0);
+    assert(avatar_gear_building_enabled_v1(avatar,1)==0);
+    assert(avatar_gear_equip_v1(avatar,7)==0);
+    assert(avatar_gear_activate_v1(avatar,origin,direction,2,42,&command)==0 && command.block_id==42);
+    assert(avatar_destroy(avatar)==0);
     puts("C host: profiles, platform carry/jump, validation and lifecycle passed");
     return 0;
 }

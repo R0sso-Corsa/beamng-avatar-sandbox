@@ -108,6 +108,7 @@ pub unsafe extern "C" fn avatar_create_with_profile_v1(
     create(unsafe { profile.read() }.into(), [x, y, z])
 }
 struct Instance {
+    gears: crate::gear::GearSystem,
     driver: crate::driver::Driver,
     camera: Camera,
     building: BuildingPlans,
@@ -146,6 +147,7 @@ fn create(profile: Profile, position: [f64; 3]) -> u64 {
     r.instances.insert(
         handle,
         Instance {
+            gears: crate::gear::GearSystem::default(),
             driver: crate::driver::Driver::default(),
             camera: Camera::default(),
             building: BuildingPlans::default(),
@@ -643,6 +645,260 @@ pub unsafe extern "C" fn avatar_building_preview_v1(
     };
     unsafe {
         out.write(bounds);
+    }
+    0
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct AvatarPoseV1 {
+    pub translation: [f64; 3],
+    pub rotation: [f64; 4],
+}
+impl From<AvatarPoseV1> for crate::animation::Pose {
+    fn from(p: AvatarPoseV1) -> Self {
+        Self {
+            translation: p.translation,
+            rotation: p.rotation,
+        }
+    }
+}
+impl From<crate::animation::Pose> for AvatarPoseV1 {
+    fn from(p: crate::animation::Pose) -> Self {
+        Self {
+            translation: p.translation,
+            rotation: p.rotation,
+        }
+    }
+}
+/// # Safety
+/// Pointers must reference aligned live poses, inputs readable/output writable.
+#[no_mangle]
+pub unsafe extern "C" fn avatar_pose_blend_v1(
+    a: *const AvatarPoseV1,
+    b: *const AvatarPoseV1,
+    amount: f64,
+    out: *mut AvatarPoseV1,
+) -> i32 {
+    if a.is_null() || b.is_null() || out.is_null() {
+        return -2;
+    }
+    let a: crate::animation::Pose = unsafe { a.read() }.into();
+    let b = unsafe { b.read() }.into();
+    let Ok(p) = a.blend(b, amount) else {
+        return -2;
+    };
+    unsafe {
+        out.write(p.into());
+    }
+    0
+}
+/// # Safety
+/// All pointers must reference aligned live poses with valid access permissions.
+#[no_mangle]
+pub unsafe extern "C" fn avatar_pose_retarget_v1(
+    bind: *const AvatarPoseV1,
+    c1: *const AvatarPoseV1,
+    alignment: *const AvatarPoseV1,
+    delta: *const AvatarPoseV1,
+    out: *mut AvatarPoseV1,
+) -> i32 {
+    if bind.is_null() || c1.is_null() || alignment.is_null() || delta.is_null() || out.is_null() {
+        return -2;
+    }
+    let Ok(p) = crate::animation::retarget(
+        unsafe { bind.read() }.into(),
+        unsafe { c1.read() }.into(),
+        unsafe { alignment.read() }.into(),
+        unsafe { delta.read() }.into(),
+    ) else {
+        return -2;
+    };
+    unsafe {
+        out.write(p.into());
+    }
+    0
+}
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct AvatarGearCommandV1 {
+    pub gear: u32,
+    pub effect: u32,
+    pub flags: u32,
+    pub origin: [f64; 3],
+    pub direction: [f64; 3],
+    pub damage: f64,
+    pub speed: f64,
+    pub gravity_factor: f64,
+    pub bounce_damage_factor: f64,
+    pub explosion_radius: f64,
+    pub fuse_seconds: f64,
+    pub wall_size: [f64; 3],
+    pub block_id: u64,
+}
+impl From<crate::gear::Command> for AvatarGearCommandV1 {
+    fn from(c: crate::gear::Command) -> Self {
+        use crate::gear::Effect;
+        let mut out = Self {
+            gear: c.gear as u32,
+            effect: 0,
+            flags: 0,
+            origin: c.origin,
+            direction: c.direction,
+            damage: 0.0,
+            speed: 0.0,
+            gravity_factor: 0.0,
+            bounce_damage_factor: 0.0,
+            explosion_radius: 0.0,
+            fuse_seconds: 0.0,
+            wall_size: [0.0; 3],
+            block_id: 0,
+        };
+        match c.effect {
+            Effect::Melee { damage } => out.damage = damage,
+            Effect::Projectile {
+                damage,
+                speed,
+                gravity_factor,
+                bounce_damage_factor,
+                explosion_radius,
+            } => {
+                out.effect = 1;
+                out.damage = damage;
+                out.bounce_damage_factor = bounce_damage_factor;
+                if let Some(v) = speed {
+                    out.flags |= 1;
+                    out.speed = v;
+                }
+                if let Some(v) = gravity_factor {
+                    out.flags |= 2;
+                    out.gravity_factor = v;
+                }
+                if let Some(v) = explosion_radius {
+                    out.flags |= 4;
+                    out.explosion_radius = v;
+                }
+            }
+            Effect::Wall { size } => {
+                out.effect = 2;
+                out.wall_size = size;
+            }
+            Effect::Bomb {
+                damage,
+                fuse_seconds,
+            } => {
+                out.effect = 3;
+                out.damage = damage;
+                out.fuse_seconds = fuse_seconds;
+            }
+            Effect::PlaceBlock => out.effect = 4,
+            Effect::RemoveBlock { id } => {
+                out.effect = 5;
+                out.block_id = id;
+            }
+        }
+        out
+    }
+}
+#[no_mangle]
+pub extern "C" fn avatar_gear_equip_v1(handle: u64, gear: u32) -> i32 {
+    use crate::gear::Gear;
+    let gear = match gear {
+        0 => Gear::Sword,
+        1 => Gear::Slingshot,
+        2 => Gear::Rocket,
+        3 => Gear::Trowel,
+        4 => Gear::Bomb,
+        5 => Gear::Superball,
+        6 => Gear::Paintball,
+        7 => Gear::BuildingTools,
+        _ => return -2,
+    };
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    if i.gears.equip(gear).is_ok() {
+        0
+    } else {
+        -2
+    }
+}
+#[no_mangle]
+pub extern "C" fn avatar_gear_building_enabled_v1(handle: u64, enabled: u32) -> i32 {
+    if enabled > 1 {
+        return -2;
+    }
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    i.gears.set_building_tools_enabled(enabled == 1);
+    0
+}
+#[no_mangle]
+pub extern "C" fn avatar_gear_advance_v1(handle: u64, seconds: f64) -> i32 {
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    if i.gears.advance(seconds).is_ok() {
+        0
+    } else {
+        -2
+    }
+}
+#[no_mangle]
+pub extern "C" fn avatar_gear_reset_v1(handle: u64) -> i32 {
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    i.gears = crate::gear::GearSystem::default();
+    0
+}
+/// # Safety
+/// origin/direction readable three doubles; out writable aligned command.
+#[no_mangle]
+pub unsafe extern "C" fn avatar_gear_activate_v1(
+    handle: u64,
+    origin: *const f64,
+    direction: *const f64,
+    mode: u32,
+    block_id: u64,
+    out: *mut AvatarGearCommandV1,
+) -> i32 {
+    if origin.is_null() || direction.is_null() || out.is_null() || mode > 2 {
+        return -2;
+    }
+    let mode = match mode {
+        0 => crate::gear::UseMode::Primary,
+        1 => crate::gear::UseMode::SwordLunge,
+        _ => crate::gear::UseMode::RemoveBlock(block_id),
+    };
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    let Ok(c) = i.gears.activate(
+        unsafe { origin.cast::<[f64; 3]>().read() },
+        unsafe { direction.cast::<[f64; 3]>().read() },
+        mode,
+    ) else {
+        return -2;
+    };
+    unsafe {
+        out.write(c.into());
     }
     0
 }

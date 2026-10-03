@@ -122,7 +122,7 @@ See [block placement](docs/BLOCK_PLACEMENT.md) for the offline planner and remai
 
 - [x] Add the seven Doomspire wiki gears as Rust equip/use commands with per-gear cooldowns.
 - [x] Add default-disabled building-tools opt-in and Lua placement-plan access.
-- [ ] Expose gears through host transport/C ABI.
+- [x] Expose gear equip/use/cooldown/reset commands through the C ABI.
 - [ ] Implement and validate projectile, damage, destruction, animation and visual adapters.
 - [ ] Verify gear behavior and building tools in BeamNG.
 
@@ -159,7 +159,7 @@ Requirement: users can choose the Roblox character or the typical BeamNG experie
 - [x] Move reusable input scheduling and avatar catalogue validation into Rust; replace Lua copies with adapter facades.
 - [ ] Connect Rust driver/catalogue APIs through native host bindings and authenticated multiplayer transport.
 - [x] Expose building preview in the C API.
-- [ ] Expose gear transport in the C API.
+- [x] Expose gear transport in the C API.
 - [ ] Supply supported game adapters for camera, controls, geometry and rendering.
 
 ## Debugging and on-screen controls
@@ -195,3 +195,6 @@ See [rig workflow](assets/source/r6_rig/README.md). Clips are converted locally,
 - [ ] Publish recent local changes to GitHub (local Git HTTPS credentials unavailable).
 
 See [tomorrow's runtime gates](docs/TOMORROW_TEST_PLAN.md).
+
+- [x] Expose rigid pose blending/retargeting through C ABI and validate from the external C host.
+- [ ] Expose clip upload/sampling, animation state and catalogue snapshots through native transport.
