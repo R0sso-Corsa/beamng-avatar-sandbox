@@ -108,6 +108,7 @@ pub unsafe extern "C" fn avatar_create_with_profile_v1(
     create(unsafe { profile.read() }.into(), [x, y, z])
 }
 struct Instance {
+    driver: crate::driver::Driver,
     camera: Camera,
     building: BuildingPlans,
     character: Character,
@@ -145,6 +146,7 @@ fn create(profile: Profile, position: [f64; 3]) -> u64 {
     r.instances.insert(
         handle,
         Instance {
+            driver: crate::driver::Driver::default(),
             camera: Camera::default(),
             building: BuildingPlans::default(),
             character,
@@ -508,4 +510,139 @@ mod tests {
         assert_eq!(avatar_destroy(h), -1);
         assert_eq!(avatar_step(h, 0.0, 0.0, 0), -1);
     }
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct AvatarInputV1 {
+    pub movement: [f64; 2],
+    pub jump: u32,
+}
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct AvatarDriverStatusV1 {
+    pub alpha: f64,
+    pub dropped_seconds: f64,
+    pub step_seconds: f64,
+}
+#[no_mangle]
+pub extern "C" fn avatar_driver_control_v1(handle: u64, index: u32, value: f64) -> i32 {
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    if i.driver.control(index as usize, value).is_ok() {
+        0
+    } else {
+        -2
+    }
+}
+#[no_mangle]
+pub extern "C" fn avatar_driver_heading_v1(handle: u64, value: f64) -> i32 {
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    if i.driver.heading(value).is_ok() {
+        0
+    } else {
+        -2
+    }
+}
+#[no_mangle]
+pub extern "C" fn avatar_driver_reset_v1(handle: u64) -> i32 {
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    i.driver.reset();
+    0
+}
+/// # Safety
+/// output must contain space for at least 16 aligned AvatarInputV1 values.
+/// count/status must be writable aligned pointers. Outputs are disjoint.
+#[no_mangle]
+pub unsafe extern "C" fn avatar_driver_batch_v1(
+    handle: u64,
+    dt: f64,
+    output: *mut AvatarInputV1,
+    count: *mut u32,
+    status: *mut AvatarDriverStatusV1,
+) -> i32 {
+    if output.is_null() || count.is_null() || status.is_null() {
+        return -2;
+    }
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    let Ok(batch) = i.driver.advance(dt) else {
+        return -2;
+    };
+    for (n, input) in batch.iter().enumerate() {
+        unsafe {
+            output.add(n).write(AvatarInputV1 {
+                movement: input.movement,
+                jump: input.jump as u32,
+            });
+        }
+    }
+    unsafe {
+        count.write(batch.len() as u32);
+        status.write(AvatarDriverStatusV1 {
+            alpha: i.driver.alpha(),
+            dropped_seconds: i.driver.dropped_seconds,
+            step_seconds: crate::DT,
+        });
+    }
+    0
+}
+
+/// # Safety
+/// centre/player/vehicles readable; out writable, aligned and disjoint.
+#[no_mangle]
+pub unsafe extern "C" fn avatar_building_preview_v1(
+    handle: u64,
+    centre: *const f64,
+    player: *const Bounds,
+    vehicles: *const Bounds,
+    count: u32,
+    out: *mut Bounds,
+) -> i32 {
+    if centre.is_null()
+        || player.is_null()
+        || out.is_null()
+        || count > 10000
+        || (count > 0 && vehicles.is_null())
+    {
+        return -2;
+    }
+    let Ok(r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get(&handle) else {
+        return -1;
+    };
+    let centre = unsafe { centre.cast::<[f64; 3]>().read() };
+    let player = unsafe { player.read() };
+    let vehicles = if count == 0 {
+        &[][..]
+    } else {
+        unsafe { std::slice::from_raw_parts(vehicles, count as usize) }
+    };
+    let Ok(bounds) = i.building.preview(centre, player, vehicles) else {
+        return -2;
+    };
+    unsafe {
+        out.write(bounds);
+    }
+    0
 }

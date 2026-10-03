@@ -54,3 +54,7 @@ R6 import remains planned. Start with a user-provided Studio export, preserve bo
 - Unloading leaves no callbacks, model objects, bindings or map modifications owned by this extension.
 
 Record results and game version here when a test machine becomes available. No engine acceptance checks have been run yet.
+
+## Current handoff
+
+Use `python tools/validate_offline.py` for the consolidated offline checks. See [tomorrow's test plan](TOMORROW_TEST_PLAN.md) for Windows build preparation, current adapter contracts and ordered runtime gates. The ZIP is Lua/UI only and does not contain a playable avatar or native loader.

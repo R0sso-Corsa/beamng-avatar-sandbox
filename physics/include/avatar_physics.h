@@ -46,7 +46,22 @@ int32_t avatar_building_clear_v1(uint64_t handle);
 int32_t avatar_building_edit_v1(uint64_t handle, uint32_t operation, uint64_t id,
     const double value[3], const AvatarBoundsV1 *player, const AvatarBoundsV1 *vehicles,
     uint32_t count, uint64_t *out_id);
+/* Read-only preview: does not allocate a part; requires enabled building tools. */
+int32_t avatar_building_preview_v1(uint64_t handle, const double centre[3],
+    const AvatarBoundsV1 *player, const AvatarBoundsV1 *vehicles, uint32_t count, AvatarBoundsV1 *out);
 int32_t avatar_building_get_v1(uint64_t handle, uint64_t id, AvatarBoundsV1 *out);
+/* Input IDs: 0 forward, 1 backward, 2 left, 3 right, 4 jump; value [0,1]. */
+typedef struct { double movement[2]; uint32_t jump; } AvatarInputV1;
+typedef struct { double alpha; double dropped_seconds; double step_seconds; } AvatarDriverStatusV1;
+int32_t avatar_driver_control_v1(uint64_t handle, uint32_t index, double value);
+int32_t avatar_driver_heading_v1(uint64_t handle, double radians);
+int32_t avatar_driver_reset_v1(uint64_t handle);
+/* output MUST hold 16 elements. Returns inputs only, does not execute physics.
+   Host commits each step atomically, resets driver/releases input on failure.
+   Reset on exit/unload; dt=0 clears input and interpolation on pause.
+   count/status are written on success only; pointers must be disjoint. */
+int32_t avatar_driver_batch_v1(uint64_t handle, double dt, AvatarInputV1 *output,
+    uint32_t *count, AvatarDriverStatusV1 *status);
 uint32_t avatar_abi_version(void);
 int32_t avatar_default_profile_v1(AvatarProfileV1 *out);
 uint64_t avatar_create_with_profile_v1(const AvatarProfileV1 *profile, double x, double y, double z);

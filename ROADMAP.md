@@ -158,7 +158,8 @@ Requirement: users can choose the Roblox character or the typical BeamNG experie
 - [x] Replace Lua camera/building implementations with backend facades; verify with Rust, external C and Lua mock checks.
 - [x] Move reusable input scheduling and avatar catalogue validation into Rust; replace Lua copies with adapter facades.
 - [ ] Connect Rust driver/catalogue APIs through native host bindings and authenticated multiplayer transport.
-- [ ] Expose gear transport and building preview in the C API.
+- [x] Expose building preview in the C API.
+- [ ] Expose gear transport in the C API.
 - [ ] Supply supported game adapters for camera, controls, geometry and rendering.
 
 ## Debugging and on-screen controls
@@ -173,22 +174,24 @@ See [telemetry and controls](docs/TELEMETRY_AND_CONTROLS.md).
 
 ## Original R6 animation import
 
-- [x] Inspect supplied Sketchfab rig and record six-part bone mapping and bind transforms.
-- [x] Prepare Studio exporter for R6 joint offsets, keyframe poses, easing and loop metadata.
-- [ ] Run exporter in Studio and import accessible original R6 clips locally.
-- [ ] Verify rest frames, skin weights and limb deformation against Studio.
-- [ ] Implement Rust clip sampling/blending and host pose application.
+- [x] Inspect supplied Sketchfab skeleton and record six-part bind mapping.
+- [x] Download six original source clips locally; decode and convert to portable pose tracks.
+- [x] Normalize legacy torso-only paths and reject duplicate/conflicting keys.
+- [x] Compile/sample all six clips with Rust quaternion interpolation and rigid retarget tests.
+- [x] Add Rust idle/walk/jump/fall/climb selection, speed scaling, transition hints and lifecycle reset.
+- [ ] Capture source Motor6D offsets in Studio and verify target bone-axis alignments.
+- [ ] Apply clips to the rig, verify skin weights/deformation, and blend actual rendered poses.
+- [ ] Expose animation pose/state transport to the host and validate live playback.
 
-See [rig mapping and export workflow](assets/source/r6_rig/README.md). No original clips have been imported or applied yet.
+See [rig workflow](assets/source/r6_rig/README.md). Clips are converted locally, not applied to the mesh.
 
-- [x] Download six original R6 source assets into ignored local storage (two idle variants, walk, jump, fall, climb). Binary/XML conversion remains pending.
-- [x] Add validated Rust joint-track sampling, quaternion interpolation, pose blending, hold keys, loop/clamp timing.
-- [ ] Convert source keyframes and Roblox easing into Rust tracks; apply and visually validate against the supplied rig.
+## Offline handoff preparation
 
-- [x] Decode all six source assets offline and convert local pose tracks to JSON/quaternions.
-- [x] Compile/sample every converted clip through the Rust sampler offline.
-- [ ] Capture original Motor6D rest offsets and resolve idle path variants before retargeting.
+- [x] Expose driver controls, heading, reset and fixed-step input batches through C ABI.
+- [x] Expose read-only building preview through C ABI and verify it does not allocate parts.
+- [x] Add a unified offline validation runner and rebuild the Lua/UI install ZIP.
+- [x] Prepare Windows native build/C-host check script and cross-platform CI configuration.
+- [ ] Execute Windows/Linux validation and remote CI; configuration alone is not validation.
+- [ ] Publish recent local changes to GitHub (local Git HTTPS credentials unavailable).
 
-- [x] Normalize legacy torso-only idle paths; reject duplicate/conflicting key times.
-- [x] Add Rust rigid-pose retargeting with bind preservation and joint-pivot tests.
-- [ ] Supply verified source C1 offsets and per-bone axis alignments; validate applied clips visually.
+See [tomorrow's runtime gates](docs/TOMORROW_TEST_PLAN.md).

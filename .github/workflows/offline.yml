@@ -1,0 +1,33 @@
+name: Offline core checks
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  rust:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo test --manifest-path physics/Cargo.toml
+      - run: cargo build --release --manifest-path physics/Cargo.toml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-core-${{ matrix.os }}
+          path: |
+            physics/target/release/*.dll
+            physics/target/release/*.so
+            physics/target/release/*.dylib
+            physics/include/avatar_physics.h
+          if-no-files-found: error
+  adapters:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install lupa
+      - run: python tools/validate_offline.py

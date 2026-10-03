@@ -1,6 +1,6 @@
 ## Rust driver and catalogue update
 
-`physics/src/driver.rs` owns 240 Hz input batching, diagonal normalization, heading rotation, jump edges, pause input release and bounded catch-up. `physics/src/catalogue.rs` owns approved avatar selection, revisioned snapshots, validation and missing-pack fallback. Lua delegates to injected Rust adapters; it no longer implements those rules. These modules currently expose Rust APIs, not C bindings. A native binding, authenticated transport and engine rendering remain required; no live BeamNG or BeamMP compatibility is claimed.
+`physics/src/driver.rs` owns 240 Hz input batching, diagonal normalization, heading rotation, jump edges, pause input release and bounded catch-up. `physics/src/catalogue.rs` owns approved avatar selection, revisioned snapshots, validation and missing-pack fallback. Lua delegates to injected Rust adapters; it no longer implements those rules. The driver now exposes C input control/heading/reset/batch APIs; the catalogue still exposes Rust APIs only. A native binding, authenticated transport and engine rendering remain required; no live BeamNG or BeamMP compatibility is claimed.
 
 # Cross-game support: C ABI v1
 
@@ -34,7 +34,7 @@ cc physics/examples/c_host.c -Iphysics/include -Lphysics/target/release \
 /tmp/avatar-c-host
 ```
 
-The check actually links against the built library and asserts walking, grounding, jumping and stale-handle rejection. It passed on the current macOS host, alongside 15 Rust unit tests. Windows and Linux builds have not been tested; build for the same OS and architecture as the target game. Shipping builds should arrange platform-appropriate library loading paths rather than relying on the example's local rpath.
+The check actually links against the built library and asserts walking, grounding, jumping and stale-handle rejection. It passed on the current macOS host, alongside the Rust unit tests. Windows and Linux builds have not been tested; build for the same OS and architecture as the target game. Shipping builds should arrange platform-appropriate library loading paths rather than relying on the example's local rpath.
 
 ## Game adapter responsibilities
 
@@ -62,6 +62,6 @@ The authoritative camera and building-plan behavior now lives in `camera.rs` and
 
 Building plans default to disabled. `avatar_building_enabled_v1`, `avatar_building_edit_v1`, `avatar_building_get_v1` and `avatar_building_clear_v1` expose place/move/resize/clone/remove on conservative bounds. The header defines operation codes, pointer requirements and output layout. Clear disables editing and removes plans without recycling IDs. Hosts supply fresh player/vehicle bounds and implement object creation/collision/rendering; none of these calls spawn objects. The Rust preview API is not separately exposed through C yet.
 
-Lua camera and building modules now require injected backend tables; their wrappers forward calls instead of duplicating behavior. A future supported BeamNG transport must map those backend methods to the Rust/C APIs. No direct FFI loader is bundled. Existing Lua standalone camera/building prototypes have been replaced, so calls without a backend fail explicitly. Physics, gears, projectiles, camera and building operations are reusable Rust code. Input scheduling and avatar catalogue validation still have Lua prototypes; their migration is remaining work. Mode choice and host takeover/restoration belong to each game adapter. Python remains asset/development tooling.
+Lua camera and building modules now require injected backend tables; their wrappers forward calls instead of duplicating behavior. A future supported BeamNG transport must map those backend methods to the Rust/C APIs. No direct FFI loader is bundled. Existing Lua standalone camera/building prototypes have been replaced, so calls without a backend fail explicitly. Physics, gears, projectiles, camera and building operations are reusable Rust code. Input scheduling and avatar catalogue validation now live in Rust; Lua forwards to host adapters. Mode choice and host takeover/restoration belong to each game adapter. Python remains asset/development tooling.
 
-All 19 Rust tests pass, and the external C host verifies camera zoom/first person/obstruction and building opt-in/place/move/query/clear alongside earlier physics checks. Lua mock tests verify forwarding and lifecycle behavior. Windows/Linux builds and actual game adapters remain unverified; a shared API cannot make an engine support native integration where none is available.
+All 24 Rust tests pass, and the external C host verifies camera zoom/first person/obstruction and building opt-in/place/move/query/clear alongside earlier physics checks. Lua mock tests verify forwarding and lifecycle behavior. Windows/Linux builds and actual game adapters remain unverified; a shared API cannot make an engine support native integration where none is available.

@@ -534,3 +534,5 @@ pub mod catalogue;
 pub mod driver;
 
 pub mod animation;
+
+pub mod animation_state;
