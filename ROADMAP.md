@@ -210,3 +210,6 @@ See [the complete offline checklist](docs/OFFLINE_CHECKLIST.md) for remaining lo
 - [x] Capture authentic R6 joint offsets, part rest transforms and current Humanoid defaults in Studio 0.741.19.7411056.
 - [x] Verify all six animation assets are accessible and use Linear easing in Studio; save static walk reference pose locally.
 - [ ] Validate actual playback, feet clearance and downloaded rig deformation before accepting the retarget.
+
+- [x] Evaluate six real AnimationTracks in Studio edit mode and compare 180 joint samples against Rust.
+- [ ] Resolve climb rotation mismatch (0.008181 radians maximum); five other clips pass strict comparison.

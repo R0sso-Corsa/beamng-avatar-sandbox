@@ -1,0 +1,48 @@
+{
+  "studioVersion": "0.741.19.7411056",
+  "method": "Animator.StepAnimations edit-mode evaluation",
+  "clips": [
+    {
+      "name": "idle1",
+      "samples": 30,
+      "maxTranslationErrorStuds": 7.06195830979528e-10,
+      "maxRotationErrorRadians": 0.0003037976272295527,
+      "passesTolerance": true
+    },
+    {
+      "name": "jump",
+      "samples": 30,
+      "maxTranslationErrorStuds": 4.134104251860005e-06,
+      "maxRotationErrorRadians": 0.00016105537896592863,
+      "passesTolerance": true
+    },
+    {
+      "name": "climb",
+      "samples": 30,
+      "maxTranslationErrorStuds": 4.3696296359030384e-08,
+      "maxRotationErrorRadians": 0.008181062660984806,
+      "passesTolerance": false
+    },
+    {
+      "name": "fall",
+      "samples": 30,
+      "maxTranslationErrorStuds": 1.41985869728245e-08,
+      "maxRotationErrorRadians": 0.00010596034148813982,
+      "passesTolerance": true
+    },
+    {
+      "name": "idle2",
+      "samples": 30,
+      "maxTranslationErrorStuds": 1.7010498031314568e-12,
+      "maxRotationErrorRadians": 0.00012036345967608119,
+      "passesTolerance": true
+    },
+    {
+      "name": "walk",
+      "samples": 30,
+      "maxTranslationErrorStuds": 7.881274968632446e-06,
+      "maxRotationErrorRadians": 0.00027273196057503544,
+      "passesTolerance": true
+    }
+  ]
+}
