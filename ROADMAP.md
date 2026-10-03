@@ -11,6 +11,18 @@ The offline foundation below is implemented. Gameplay milestones remain pending;
 - [x] Add a ZIP packager, offline Lua smoke checks and an engine test checklist.
 - [ ] Verify extension hooks and actions in BeamNG.
 
+## Portable character physics
+
+- [x] Research documented Roblox settings and historical community measurements.
+- [x] Add a Rust AVBD subset for one translational body and static plane contacts.
+- [x] Add configurable walking/jumping, offline numerical checks and a trajectory example.
+- [x] Add a Studio motion capture script (runtime verification pending).
+- [ ] Collect current R6 movement traces and calibrate acceleration, braking and air control.
+- [ ] Add capsule collision detection, swept queries, friction and step handling.
+- [ ] Validate Rust/BeamNG transport and connect movement to avatar, camera and animations.
+- [ ] Verify stock map collision and moving platforms in BeamNG.
+- [ ] Add full rotational/articulated AVBD and vehicle coupling when required.
+
 ## 1. Verify the player foundation
 
 - [ ] Record BeamNG version and test environment.

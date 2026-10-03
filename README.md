@@ -8,6 +8,8 @@ An initial Lua mod skeleton is implemented: explicit loading, enable/disable act
 
 ## Development
 
+An engine-neutral Rust character physics prototype now lives in `physics/`. It implements a limited AVBD contact solver against static planes, with walking and jumping. See [character physics research](docs/CHARACTER_PHYSICS.md) for sourced Roblox metrics, provisional tuning, test commands and integration limits. It is not yet connected to BeamNG; the Lua ZIP does not include or load it.
+
 See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for packaging, installation, console commands, and engine acceptance checks. Build the test ZIP with `python3 tools/package_mod.py`; run offline logic checks with `lua tests/smoke.lua` from this repository's root.
 
 ## First playable milestone
@@ -26,7 +28,7 @@ Player movement and interaction come first. Map creation is outside the initial 
 
 ## Proposed approach
 
-Start by evaluating BeamNG's existing walking controller and visual mesh support. Prove animation playback with one character before generalising avatar import. Use a Lua gameplay extension for interactions and evaluate collision-enabled TSStatic objects for placed blocks. Validate these choices against the installed BeamNG version; they are not confirmed implementation decisions.
+Use the portable Rust core for avatar movement, with a separate BeamNG adapter for collision queries, input and visual transforms. Native Rust loading or IPC remains to be validated. Prove animation playback with one character before generalising avatar import. Use a Lua gameplay extension for interactions and evaluate collision-enabled TSStatic objects for placed blocks. Validate these choices against the installed BeamNG version; they are not confirmed implementation decisions.
 
 Avatar appearance, animation, and collision are separate concerns. Roblox scripts and engine services will not run directly in BeamNG. An avatar importer must convert geometry, textures, body transforms, and compatible animation data rather than copy Roblox gameplay scripts.
 
