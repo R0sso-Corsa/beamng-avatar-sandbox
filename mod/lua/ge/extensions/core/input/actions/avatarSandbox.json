@@ -1,0 +1,18 @@
+{
+  "avatarSandbox_toggle": {
+    "cat": "menuExtra",
+    "order": 900,
+    "ctx": "tlua",
+    "onDown": "extensions.load('avatarSandbox_main'); avatarSandbox_main.toggle()",
+    "title": "Avatar Sandbox: toggle",
+    "desc": "Load and toggle the experimental avatar interaction foundation."
+  },
+  "avatarSandbox_interact": {
+    "cat": "menuExtra",
+    "order": 901,
+    "ctx": "tlua",
+    "onDown": "if avatarSandbox_main then avatarSandbox_main.interact() end",
+    "title": "Avatar Sandbox: interact",
+    "desc": "Interact with the current registered target (engine picking is pending)."
+  }
+}

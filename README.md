@@ -4,7 +4,11 @@ An experimental BeamNG.drive mod project for a controllable Roblox-style avatar,
 
 ## Status
 
-Planning and feasibility validation. No playable mod or avatar importer has been implemented yet. Roblox avatar conversion, animation playback, and runtime block collision still need to be demonstrated in BeamNG.
+An initial Lua mod skeleton is implemented: explicit loading, enable/disable actions, mod-owned interaction targets, reach validation, and lifecycle cleanup. A packager and offline smoke checks are included. No BeamNG engine tests have been run, and this is not yet a playable avatar mod. Roblox avatar conversion, animation playback, engine targeting, and runtime block collision remain pending.
+
+## Development
+
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for packaging, installation, console commands, and engine acceptance checks. Build the test ZIP with `python3 tools/package_mod.py`; run offline logic checks with `lua tests/smoke.lua` from this repository's root.
 
 ## First playable milestone
 
@@ -42,4 +46,3 @@ See [ROADMAP.md](ROADMAP.md) for milestones and acceptance checks.
 - [BeamNG TSStatic objects](https://documentation.beamng.com/modding/levels/level_classes/tsstatic/)
 - [Example walking-mode character mod](https://www.beamng.com/threads/mita-miside-unicycle-mod.102090/)
 - [Roblox avatar creation API](https://create.roblox.com/docs/reference/engine/classes/Players)
-
