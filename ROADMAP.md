@@ -60,6 +60,8 @@ Acceptance: the player can select and interact with the intended nearby object r
 
 ## 4. Add minimal block placement
 
+- [x] Add offline one-metre grid planning, player/vehicle AABB overlap checks, plan removal and lifecycle cleanup.
+
 - [ ] Create a collision-enabled cube at runtime on a stock map.
 - [ ] Add placement preview, simple grid snapping, placement, and removal.
 - [ ] Reject placement overlapping the player or a vehicle.
@@ -111,3 +113,5 @@ See [BeamNG integration](docs/BEAMNG_INTEGRATION.md) for runtime gates and conso
 
 - [x] Prepare mock-tested GE input/fixed-step driver with pause, backlog and lifecycle handling.
 - [ ] Verify action bindings, simulation delta and camera heading on BeamNG.
+
+See [block placement](docs/BLOCK_PLACEMENT.md) for the offline planner and remaining engine responsibilities.
