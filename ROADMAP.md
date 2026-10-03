@@ -135,3 +135,6 @@ See [avatar import and multiplayer delivery](docs/AVATAR_IMPORT.md) for the sour
 
 - [x] Add avatar-ID catalogues and mock-tested server-approved appearance snapshots, join/change/leave synchronization and missing-pack resolution.
 - [ ] Connect avatar selection UI, engine asset loading/rendering and live BeamMP events.
+
+- [x] Add offline projectile trajectories, host-fed impact/bounce events, lifetimes and one-shot bomb timers.
+- [ ] Connect projectile collision shapes, damage/destruction and visual effects to host adapters.
