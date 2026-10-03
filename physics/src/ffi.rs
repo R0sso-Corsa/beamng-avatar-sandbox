@@ -1,5 +1,7 @@
 //! C ABI v1. Handles are process-local; calls are serialized by one mutex.
 use crate::{
+    building::{Bounds, BuildingPlans},
+    camera::{Camera, CameraPose},
     mesh::{StaticMesh, Triangle},
     Character, Input, Profile,
 };
@@ -106,6 +108,8 @@ pub unsafe extern "C" fn avatar_create_with_profile_v1(
     create(unsafe { profile.read() }.into(), [x, y, z])
 }
 struct Instance {
+    camera: Camera,
+    building: BuildingPlans,
     character: Character,
     mesh: StaticMesh,
 }
@@ -141,6 +145,8 @@ fn create(profile: Profile, position: [f64; 3]) -> u64 {
     r.instances.insert(
         handle,
         Instance {
+            camera: Camera::default(),
+            building: BuildingPlans::default(),
             character,
             mesh: StaticMesh::new(Vec::new()).unwrap(),
         },
@@ -267,6 +273,183 @@ pub unsafe extern "C" fn avatar_step_platform_v1(
         Ok(_) => 0,
         Err(_) => -2,
     }
+}
+#[no_mangle]
+pub extern "C" fn avatar_camera_active_v1(handle: u64, active: u32) -> i32 {
+    if active > 1 {
+        return -2;
+    }
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    i.camera.set_active(active == 1);
+    0
+}
+#[no_mangle]
+pub extern "C" fn avatar_camera_look_v1(handle: u64, yaw: f64, pitch: f64) -> i32 {
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    if i.camera.look(yaw, pitch).is_ok() {
+        0
+    } else {
+        -2
+    }
+}
+#[no_mangle]
+pub extern "C" fn avatar_camera_zoom_v1(handle: u64, steps: f64) -> i32 {
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    if i.camera.zoom(steps).is_ok() {
+        0
+    } else {
+        -2
+    }
+}
+/// # Safety
+/// focus/eye must each point to three readable doubles; out must point to one
+/// writable aligned CameraPose. All memory stays valid throughout this call.
+#[no_mangle]
+pub unsafe extern "C" fn avatar_camera_pose_v1(
+    handle: u64,
+    focus: *const f64,
+    eye: *const f64,
+    obstruction: f64,
+    out: *mut CameraPose,
+) -> i32 {
+    if focus.is_null() || eye.is_null() || out.is_null() {
+        return -2;
+    }
+    let Ok(r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get(&handle) else {
+        return -1;
+    };
+    let focus = unsafe { std::ptr::read(focus.cast::<[f64; 3]>()) };
+    let eye = unsafe { std::ptr::read(eye.cast::<[f64; 3]>()) };
+    let hit = if obstruction == -1.0 {
+        None
+    } else {
+        Some(obstruction)
+    };
+    let Ok(pose) = i.camera.pose(focus, eye, hit) else {
+        return -2;
+    };
+    unsafe {
+        out.write(pose);
+    }
+    0
+}
+#[no_mangle]
+pub extern "C" fn avatar_building_enabled_v1(handle: u64, enabled: u32) -> i32 {
+    if enabled > 1 {
+        return -2;
+    }
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    i.building.set_enabled(enabled == 1);
+    0
+}
+#[no_mangle]
+pub extern "C" fn avatar_building_clear_v1(handle: u64) -> i32 {
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    i.building.clear();
+    0
+}
+/// # Safety
+/// value is three readable doubles; player one readable Bounds; vehicles count
+/// readable Bounds (null allowed for zero); out_id one writable u64.
+#[no_mangle]
+pub unsafe extern "C" fn avatar_building_edit_v1(
+    handle: u64,
+    operation: u32,
+    id: u64,
+    value: *const f64,
+    player: *const Bounds,
+    vehicles: *const Bounds,
+    count: u32,
+    out_id: *mut u64,
+) -> i32 {
+    if operation > 4
+        || value.is_null()
+        || player.is_null()
+        || out_id.is_null()
+        || count > 10000
+        || (count > 0 && vehicles.is_null())
+    {
+        return -2;
+    }
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    let value = unsafe { value.cast::<[f64; 3]>().read() };
+    let player = unsafe { player.read() };
+    let vehicles = if count == 0 {
+        &[][..]
+    } else {
+        unsafe { std::slice::from_raw_parts(vehicles, count as usize) }
+    };
+    let result = match operation {
+        0 => i.building.place(value, player, vehicles),
+        1 => i
+            .building
+            .move_part(id, value, player, vehicles)
+            .map(|_| id),
+        2 => i.building.resize(id, value, player, vehicles).map(|_| id),
+        3 => i.building.clone_part(id, value, player, vehicles),
+        _ => i.building.remove(id).map(|_| id),
+    };
+    let Ok(id) = result else {
+        return -2;
+    };
+    unsafe {
+        out_id.write(id);
+    }
+    0
+}
+/// # Safety
+/// out points to one aligned writable Bounds.
+#[no_mangle]
+pub unsafe extern "C" fn avatar_building_get_v1(handle: u64, id: u64, out: *mut Bounds) -> i32 {
+    if out.is_null() {
+        return -2;
+    }
+    let Ok(r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get(&handle) else {
+        return -1;
+    };
+    let Some(b) = i.building.get(id) else {
+        return -2;
+    };
+    unsafe {
+        out.write(b);
+    }
+    0
 }
 /// # Safety
 /// out must point to one aligned, writable AvatarState for the duration of the call.
