@@ -1,0 +1,8 @@
+.DS_Store
+assets/private/
+imports/
+exports/
+*.log
+.env
+.env.*
+!.env.example
