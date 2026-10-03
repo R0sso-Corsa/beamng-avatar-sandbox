@@ -43,7 +43,11 @@ function M.setCharacterMode(mode)
   if wantActive~=avatarActive then
     local callback=wantActive and modeAdapter.enter or modeAdapter.leave
     local ok,result=pcall(callback)
-    if not ok or result~=true then return false,'Character adapter transition failed' end
+    if not ok or result~=true then
+      local t=type(extensions)=='table' and extensions.avatarSandbox_telemetry
+      if t then t.record('error','characterMode',not ok and tostring(result) or 'Character adapter rejected transition') end
+      return false,'Character adapter transition failed'
+    end
     avatarActive=wantActive
   end
   characterMode=mode
@@ -126,6 +130,8 @@ function M.interact()
   local ok, err = pcall(target.callback, id)
   if not ok then
     report('Interaction failed: ' .. tostring(err))
+    local t=type(extensions)=='table' and extensions.avatarSandbox_telemetry
+    if t then t.record('error','interaction',tostring(err)) end
     return false, 'Interaction callback failed'
   end
   return true
