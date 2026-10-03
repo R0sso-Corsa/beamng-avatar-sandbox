@@ -46,6 +46,42 @@ function M.place(desired, player, vehicles)
   blocks[nextId]=copy(cube)
   return nextId,copy(cube)
 end
+-- Axis-aligned edits validate the complete replacement before committing.
+function M.edit(id, replacement, player, vehicles)
+  if not blocks[id] then return false,'Unknown block' end
+  if not bounds(replacement) or not bounds(player) or type(vehicles)~='table' then
+    return false,'Invalid bounds'
+  end
+  for _,axis in ipairs({'x','y','z'}) do
+    if replacement.max[axis]-replacement.min[axis]<0.01 then return false,'Part too small' end
+  end
+  if overlaps(replacement,player) then return false,'Overlaps player' end
+  for _,vehicle in pairs(vehicles) do
+    if not bounds(vehicle) then return false,'Invalid vehicle bounds' end
+    if overlaps(replacement,vehicle) then return false,'Overlaps vehicle' end
+  end
+  for other,block in pairs(blocks) do
+    if other~=id and overlaps(replacement,block) then return false,'Overlaps placed block' end
+  end
+  blocks[id]=copy(replacement)
+  return true
+end
+function M.clone(id, offset, player, vehicles)
+  local original=blocks[id]
+  if not original or not point(offset) then return nil,'Invalid clone' end
+  local candidate=copy(original)
+  for _,axis in ipairs({'x','y','z'}) do
+    candidate.min[axis]=candidate.min[axis]+offset[axis]
+    candidate.max[axis]=candidate.max[axis]+offset[axis]
+  end
+  -- Temporary record is removed on validation failure; IDs never recycle.
+  nextId=nextId+1
+  local cloneId=nextId
+  blocks[cloneId]=copy(original)
+  local ok,err=M.edit(cloneId,candidate,player,vehicles)
+  if not ok then blocks[cloneId]=nil; return nil,err end
+  return cloneId,copy(candidate)
+end
 function M.remove(id)
   if not finite(id) or id%1~=0 or not blocks[id] then return false,'Unknown block' end
   blocks[id]=nil

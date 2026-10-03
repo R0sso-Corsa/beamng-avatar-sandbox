@@ -10,8 +10,15 @@ These are community-reported prototype defaults, not verified current Roblox beh
 
 ## Optional building-tools gear
 
-`Gear::BuildingTools` is disabled by default. `set_building_tools_enabled(true)` allows equipping and emitting place/remove commands; disabling it unequips it. This is our mod-owned placement/removal tool, not Roblox F3X or a claim to reproduce an unnamed building-tools asset. It is separate from the Trowel.
+`Gear::BuildingTools` is disabled by default. `set_building_tools_enabled(true)` allows equipping and emitting place/remove commands; disabling it unequips it. This is our mod-owned placement/removal tool, now based on F3X-style editing, independently implemented for mod-owned parts. It is separate from the Trowel.
 
 BeamNG's optional `avatarSandbox_buildingTools` action toggles the user setting (bind manually). Load the planner separately with `extensions.load("avatarSandbox_placement")`. The building-tools extension delegates plans only while enabled and resets permission on mission end/unload. It does not spawn engine objects; see [block placement](BLOCK_PLACEMENT.md). No Rust gear transport or BeamNG combat adapter is attached yet. The Rust gear API is currently not exposed through the C ABI.
 
 Offline checks cover all seven gears, cooldowns, normalized/invalid aim, sword lunge, opt-in removal and revocation; Lua checks cover default-disabled building access and mission reset. No gameplay parity or in-game gear tests have been run.
+
+
+## F3X-inspired editing
+
+The user-selected [Building Tools by F3X reference](https://roblox.fandom.com/wiki/Building_Tools_by_F3X) guides the optional editor. The first offline subset adds world-axis move, symmetric resize and clone, alongside new cubes and delete. Calls operate on one plan ID and revalidate player, vehicle and other-part AABB overlap before committing. Dimensions have a 1 cm minimum. Failed edits preserve the existing part; clone failures leave no new part. The user enable setting gates all editing calls.
+
+This is a partial F3X-inspired foundation, not the original plugin or its code/assets. Selection widgets, snapping increments for edits, local axes, rotation/pivots, paint/material/surface tools, anchor/collision toggles, non-cube parts, mesh/texture, welding, lighting, decoration, undo/redo and export remain pending. These features need explicit host support, especially rotated collision and dynamic parts. Runtime creation/rendering remains unimplemented. Existing cube plans are currently axis-aligned. Move/resize/clone and rejected-overlap rollback pass offline tests.
