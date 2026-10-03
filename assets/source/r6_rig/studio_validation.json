@@ -1,0 +1,225 @@
+{
+  "defaultEasingDirection": "In",
+  "studioVersion": "0.741.19.7411056",
+  "defaultEasingStyle": "Linear",
+  "parts": {
+    "Left Leg": {
+      "size": [
+        1,
+        2,
+        1
+      ],
+      "cframe": [
+        -0.5,
+        0.5,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "Right Arm": {
+      "size": [
+        1,
+        2,
+        1
+      ],
+      "cframe": [
+        1.5,
+        2.5,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "Head": {
+      "size": [
+        2,
+        1,
+        1
+      ],
+      "cframe": [
+        0,
+        4,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "Right Leg": {
+      "size": [
+        1,
+        2,
+        1
+      ],
+      "cframe": [
+        0.5,
+        0.5,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "Torso": {
+      "size": [
+        2,
+        2,
+        1
+      ],
+      "cframe": [
+        0,
+        2.5,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "HumanoidRootPart": {
+      "size": [
+        2,
+        2,
+        1
+      ],
+      "cframe": [
+        0,
+        2.5,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "Left Arm": {
+      "size": [
+        1,
+        2,
+        1
+      ],
+      "cframe": [
+        -1.5,
+        2.5,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  },
+  "clips": [
+    {
+      "keyframes": 21,
+      "loop": true,
+      "name": "idle1",
+      "id": 180435571,
+      "accessible": true,
+      "easingStyles": {
+        "Linear": true
+      }
+    },
+    {
+      "keyframes": 19,
+      "loop": false,
+      "name": "jump",
+      "id": 125750702,
+      "accessible": true,
+      "easingStyles": {
+        "Linear": true
+      }
+    },
+    {
+      "keyframes": 11,
+      "loop": true,
+      "name": "climb",
+      "id": 180436334,
+      "accessible": true,
+      "easingStyles": {
+        "Linear": true
+      }
+    },
+    {
+      "keyframes": 15,
+      "loop": true,
+      "name": "fall",
+      "id": 180436148,
+      "accessible": true,
+      "easingStyles": {
+        "Linear": true
+      }
+    },
+    {
+      "keyframes": 5,
+      "loop": true,
+      "name": "idle2",
+      "id": 180435792,
+      "accessible": true,
+      "easingStyles": {
+        "Linear": true
+      }
+    },
+    {
+      "keyframes": 22,
+      "loop": true,
+      "name": "walk",
+      "id": 180426354,
+      "accessible": true,
+      "easingStyles": {
+        "Linear": true
+      }
+    }
+  ],
+  "motion": {
+    "useJumpPower": true,
+    "jumpPower": 50,
+    "maxSlopeAngle": 89,
+    "jumpHeight": 7.199999809265137,
+    "gravity": 196.1999969482422,
+    "walkSpeed": 16,
+    "hipHeight": 0
+  }
+}

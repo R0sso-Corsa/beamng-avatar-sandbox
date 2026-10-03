@@ -33,8 +33,9 @@ This is the current offline backlog, not a promise that every possible future fe
 
 ## Needs Roblox Studio, but not BeamNG
 
-- [ ] Run the existing exporter to capture the default R6 Motor6D C0/C1 offsets.
-- [ ] Confirm omitted legacy easing defaults and motion against actual Studio playback.
+- [x] Capture the default R6 Motor6D C0/C1 offsets in installed Studio.
+- [x] Confirm omitted legacy easing defaults in Studio and all six clips' easing styles.
+- [ ] Compare motion against actual Animator playback; static posing alone does not verify playback.
 - [ ] Validate target axis alignments, rig deformation and feet placement visually.
 - [ ] Capture movement traces to calibrate walking, braking, air control and jumps.
 - [ ] Export a test user avatar and check supported textures/accessories with the local package validator.

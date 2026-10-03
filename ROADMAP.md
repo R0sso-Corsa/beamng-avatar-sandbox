@@ -206,3 +206,7 @@ See [tomorrow's runtime gates](docs/TOMORROW_TEST_PLAN.md).
 - [x] Verify actual converted clip keys and looping/intermediate samples via the shared library.
 
 See [the complete offline checklist](docs/OFFLINE_CHECKLIST.md) for remaining local, Studio and Windows work.
+
+- [x] Capture authentic R6 joint offsets, part rest transforms and current Humanoid defaults in Studio 0.741.19.7411056.
+- [x] Verify all six animation assets are accessible and use Linear easing in Studio; save static walk reference pose locally.
+- [ ] Validate actual playback, feet clearance and downloaded rig deformation before accepting the retarget.
