@@ -35,3 +35,19 @@ assert building.status()['enabled'] is True
 building.onClientEndMission()
 assert building.status()['enabled'] is False
 print('Building-tools opt-in and reset passed')
+
+lua.globals().building = building
+lua.execute("""
+assert(building.setEnabled(true))
+local player={min={x=20,y=20,z=0},max={x=21,y=21,z=2}}
+local id=assert(building.place({x=0.5,y=0.5,z=0.5},player,{}))
+assert(building.move(id,{x=2,y=0,z=0},player,{}))
+assert(building.resize(id,{x=2,y=1,z=1},player,{}))
+local clone=assert(building.clone(id,{x=0,y=2,z=0},player,{}))
+assert(not building.move(clone,{x=0,y=-2,z=0},player,{}))
+assert(placement.get(clone).min.y==2)
+assert(not building.resize(id,{x=-1,y=1,z=1},player,{}))
+building.setEnabled(false)
+assert(not building.move(id,{x=1,y=0,z=0},player,{}))
+""")
+print('F3X-inspired move, resize, clone and rollback passed')
