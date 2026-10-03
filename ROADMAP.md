@@ -72,6 +72,8 @@ Acceptance: place a cube, jump onto it, drive into it, remove it, and verify its
 
 ## 5. Import one Roblox avatar
 
+- [x] Define and validate a local R6 source package with checksums and import limits (engine conversion pending).
+
 - [ ] Load a test user's R6 avatar through Roblox Studio's supported avatar API.
 - [ ] Establish a reproducible export and conversion process.
 - [ ] Preserve supported body appearance, textures, and accessories.
@@ -128,3 +130,5 @@ See [gear scope and defaults](docs/GEARS.md).
 
 - [x] Base optional building tools on F3X-style editing; add offline move, symmetric resize and clone with overlap rollback.
 - [ ] Add selection UI, rotation, appearance tools and undo/redo, then validate engine edits.
+
+See [avatar import and multiplayer delivery](docs/AVATAR_IMPORT.md) for the source format and proposed server-approved pack workflow.
