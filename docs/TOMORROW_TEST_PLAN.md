@@ -27,7 +27,7 @@ Inventory symbol presence is not proof that an API works. Save the report and co
 - Implement a host adapter for character entry/exit, input ownership, camera/geometry/rendering. Lua `driver.attach` now takes a backend table with `reset`, `setControl`, `setHeading`, `advance`, `status`; the old single-step function is no longer accepted.
 - Driver C batching returns at most 16 input records, not stepped character states. Execute each through the character stepping API, commit atomically, reset/release inputs on failure. Use simulation delta, pause with dt=0, clear on mode exit. Driver heading uses +Y-forward/+X-right Z-up; the source mesh faces -Y, so apply an explicit visual-facing conversion.
 - Spawn one visible rig before enabling the player controller. Apply bind pose first, then a single walk clip. Preserve inverse bind matrices and auxiliary end bones. Confirm feet, scale, rotation, shoulder pivots and skin weights.
-- Connect animation selection from `animation_state::Animator`: supply confirmed grounded/climbing state, one-shot jumped event and actual planar speed in metres/second. On selection changes retain the last rendered pose and blend over the suggested duration. This remains a Rust API, with no C animation binding yet.
+- Connect animation selection from `animation_state::Animator`: supply confirmed grounded/climbing state, one-shot jumped event and actual planar speed in metres/second. On selection changes retain the last rendered pose and blend over the suggested duration. Selection is now also exposed through avatar_animation_update_v1; host pose application is still required.
 - Apply camera poses and obstruction sweep results; hide local head in first person. Restore the native camera/input/vehicle state on exit or failure.
 - Test interaction using a real raycast and registered targets. Then test a single host-created collision-enabled cube; preview/planning alone does not spawn engine geometry.
 - Finally test unload, map change, pause, input focus loss and repeated mode switches. Verify no leftover callbacks, objects, held input or camera takeover.
@@ -44,10 +44,12 @@ Run `python tools/validate_offline.py` with Cargo, C compiler, Node and Python+l
 
 ## Deferred until the basic player works
 
-Gear equip/use/cooldown/reset commands now have C transport; projectile effects still need host collision/damage/rendering. Catalogue validation is Rust-only and needs native bindings plus authenticated BeamMP events. Dynamic geometry, rotating platforms, articulated AVBD, broad map benchmarks and network authority are not solved by the install ZIP. Avoid building multiplayer or avatar selection around an unverified renderer.
+Gear equip/use/cooldown/reset commands now have C transport; projectile effects still need host collision/damage/rendering. Catalogue validation now has C bindings; authenticated BeamMP events and engine avatar delivery are still required. Dynamic geometry, rotating platforms, articulated AVBD, broad map benchmarks and network authority are not solved by the install ZIP. Avoid building multiplayer or avatar selection around an unverified renderer.
 
 Record each gate as pass/fail with game version, logs, reproduction steps and a screenshot. Do not mark roadmap gameplay milestones complete solely from offline checks.
 
 ## Additional native interfaces
 
-The C header now includes rigid pose blend/retarget operations and gear equip, activation, cooldown advance and reset. The external macOS C host verifies success, invalid pose input, rocket command flags, cooldown rejection/recovery and building-tools opt-in/removal. These are commands and transforms only; they do not load clips, render a rig, execute damage, or provide multiplayer authority. Catalogue, clip upload/sampling and animation-state C transport remain pending.
+The C header now includes rigid pose blend/retarget operations and gear equip, activation, cooldown advance and reset. The external macOS C host verifies success, invalid pose input, rocket command flags, cooldown rejection/recovery and building-tools opt-in/removal. These are commands and transforms only; they do not load clips, render a rig, execute damage, or provide multiplayer authority. Catalogue, clip upload/sampling and animation-state C transport are now implemented and checked by the external C host.
+
+The native private-asset check uploads all six converted original clips, verifies every source key pose and samples loops/intermediate times. Run it through `python tools/validate_offline.py --private-assets`. See OFFLINE_CHECKLIST.md for the remaining backlog.

@@ -26,6 +26,8 @@ if __name__=='__main__':
        '-lavatar_physics',f'-Wl,-rpath,{ROOT}/physics/target/release','-lm','-o',executable)
    run(executable)
  else:print('External C host not run: compile c_host.c with your Windows C toolchain separately')
- if args.private_assets:run(sys.executable,'tests/r6_animation_smoke.py')
+ if args.private_assets:
+  run(sys.executable,'tests/r6_animation_smoke.py')
+  run(sys.executable,'tests/native_animation_smoke.py')
  run(sys.executable,'tools/package_mod.py')
  print('Offline validation passed. This does not establish game compatibility.')

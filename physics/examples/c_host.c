@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 int main(void) {
     assert(avatar_abi_version() == 1);
     uint64_t avatar = avatar_create(0, 0, 0.7651);
@@ -115,6 +116,38 @@ int main(void) {
     assert(avatar_gear_building_enabled_v1(avatar,1)==0);
     assert(avatar_gear_equip_v1(avatar,7)==0);
     assert(avatar_gear_activate_v1(avatar,origin,direction,2,42,&command)==0 && command.block_id==42);
+    assert(avatar_destroy(avatar)==0);
+    avatar=avatar_create(0,0,1);
+    AvatarKeyV1 keys[2]={{0,{{0,0,0},{0,0,0,1}},0},{1,{{2,0,0},{0,0,1,0}},0}};
+    assert(avatar_track_upload_v1(avatar,10,keys,2)==0);
+    assert(avatar_track_sample_v1(avatar,10,0.5,0,&pose)==0 && pose.translation[0]==1);
+    keys[1].time=0;
+    assert(avatar_track_upload_v1(avatar,10,keys,2)==-2);
+    assert(avatar_track_sample_v1(avatar,10,0.5,0,&pose)==0 && pose.translation[0]==1);
+    AvatarMotionV1 motion={1,1,0,0,4.8};AvatarSelectionV1 selection;
+    assert(avatar_animation_update_v1(avatar,0.01,&motion,&selection)==0 && selection.clip==1 && selection.changed==1);
+    motion.active=0;
+    assert(avatar_animation_update_v1(avatar,0.01,&motion,&selection)==0 && selection.active==0);
+    assert(avatar_animation_reset_v1(avatar)==0);
+    assert(avatar_track_sample_v1(avatar,10,0,0,&pose)==-2);
+    AvatarIdV1 hash={{0}},requested,resolved;memset(hash.bytes,'a',64);
+    assert(avatar_catalogue_configure_v1(avatar,&hash,1,NULL,0)==0);
+    assert(avatar_catalogue_change_v1(avatar,0,12,NULL)==0);
+    assert(avatar_catalogue_change_v1(avatar,1,12,&hash)==0);
+    AvatarAssignmentV1 assignments[256];uint64_t revision;
+    assert(avatar_catalogue_snapshot_v1(avatar,assignments,&count,&revision)==0 && count==1);
+    assert(avatar_catalogue_apply_v1(avatar,1,revision,assignments,count)==0);
+    assert(avatar_catalogue_get_v1(avatar,12,&requested,&resolved)==0);
+    assert(memcmp(requested.bytes,hash.bytes,65)==0 && strcmp((char*)resolved.bytes,"noob")==0);
+    assert(avatar_catalogue_apply_v1(avatar,1,revision,assignments,count)==-2);
+    assignments[1]=assignments[0];
+    assert(avatar_catalogue_apply_v1(avatar,1,revision+1,assignments,2)==-2);
+    assert(avatar_catalogue_client_reset_v1(avatar)==0);
+    assert(avatar_catalogue_apply_v1(avatar,1,0,NULL,0)==0);
+    assert(avatar_catalogue_get_v1(avatar,12,&requested,&resolved)==-2);
+    hash.bytes[64]='b';
+    assert(avatar_catalogue_configure_v1(avatar,&hash,1,NULL,0)==-2);
+    assert(avatar_catalogue_change_v1(avatar,2,12,NULL)==0);
     assert(avatar_destroy(avatar)==0);
     puts("C host: profiles, platform carry/jump, validation and lifecycle passed");
     return 0;

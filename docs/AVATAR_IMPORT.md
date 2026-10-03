@@ -1,6 +1,6 @@
 ## Rust driver and catalogue update
 
-`physics/src/driver.rs` owns 240 Hz input batching, diagonal normalization, heading rotation, jump edges, pause input release and bounded catch-up. `physics/src/catalogue.rs` owns approved avatar selection, revisioned snapshots, validation and missing-pack fallback. Lua delegates to injected Rust adapters; it no longer implements those rules. The driver now exposes C input control/heading/reset/batch APIs; the catalogue still exposes Rust APIs only. A native binding, authenticated transport and engine rendering remain required; no live BeamNG or BeamMP compatibility is claimed.
+`physics/src/driver.rs` owns 240 Hz input batching, diagonal normalization, heading rotation, jump edges, pause input release and bounded catch-up. `physics/src/catalogue.rs` owns approved avatar selection, revisioned snapshots, validation and missing-pack fallback. Lua delegates to injected Rust adapters; it no longer implements those rules. The driver now exposes C input control/heading/reset/batch APIs; the catalogue now also exposes versioned C configuration/snapshot APIs. A native binding, authenticated transport and engine rendering remain required; no live BeamNG or BeamMP compatibility is claimed.
 
 # Local R6 source imports and multiplayer plan
 

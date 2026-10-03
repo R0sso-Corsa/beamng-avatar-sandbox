@@ -108,6 +108,10 @@ pub unsafe extern "C" fn avatar_create_with_profile_v1(
     create(unsafe { profile.read() }.into(), [x, y, z])
 }
 struct Instance {
+    tracks: BTreeMap<u64, crate::animation::Track>,
+    animator: crate::animation_state::Animator,
+    catalogue_server: crate::catalogue::Server,
+    catalogue_client: crate::catalogue::Client,
     gears: crate::gear::GearSystem,
     driver: crate::driver::Driver,
     camera: Camera,
@@ -147,6 +151,10 @@ fn create(profile: Profile, position: [f64; 3]) -> u64 {
     r.instances.insert(
         handle,
         Instance {
+            tracks: BTreeMap::new(),
+            animator: crate::animation_state::Animator::default(),
+            catalogue_server: crate::catalogue::Server::new(&[]).unwrap(),
+            catalogue_client: crate::catalogue::Client::new(&[]).unwrap(),
             gears: crate::gear::GearSystem::default(),
             driver: crate::driver::Driver::default(),
             camera: Camera::default(),
@@ -902,3 +910,5 @@ pub unsafe extern "C" fn avatar_gear_activate_v1(
     }
     0
 }
+
+mod extended;

@@ -197,4 +197,12 @@ See [rig workflow](assets/source/r6_rig/README.md). Clips are converted locally,
 See [tomorrow's runtime gates](docs/TOMORROW_TEST_PLAN.md).
 
 - [x] Expose rigid pose blending/retargeting through C ABI and validate from the external C host.
-- [ ] Expose clip upload/sampling, animation state and catalogue snapshots through native transport.
+- [x] Expose clip upload/sampling, animation state and catalogue snapshots through native transport.
+
+## Native animation and catalogue completion
+
+- [x] Expose clip track upload/sample/reset and animation state selection through the C ABI.
+- [x] Expose approved/installed catalogues, server changes/snapshots and client apply/get/reset through C ABI.
+- [x] Verify actual converted clip keys and looping/intermediate samples via the shared library.
+
+See [the complete offline checklist](docs/OFFLINE_CHECKLIST.md) for remaining local, Studio and Windows work.

@@ -86,6 +86,36 @@ int32_t avatar_gear_reset_v1(uint64_t handle);
    Reset on mode exit/unload; commands must not be replayed on a host failure. */
 int32_t avatar_gear_activate_v1(uint64_t handle, const double origin[3],
     const double direction[3], uint32_t mode, uint64_t block_id, AvatarGearCommandV1 *out);
+typedef struct { double time; AvatarPoseV1 pose; uint32_t interpolation; } AvatarKeyV1;
+typedef struct { uint32_t active, grounded, jumped, climbing; double speed; } AvatarMotionV1;
+typedef struct { uint32_t active, clip, changed; double time, rate, blend_seconds; } AvatarSelectionV1;
+/* Up to 64 tracks/handle, 10000 keys/track. IDs supplied by host. Upload is atomic.
+   interpolation: 0 linear, 1 hold; duration=0 nonlooping, else valid loop duration.
+   Source pose axes/units are preserved; host maps track IDs to bones. */
+int32_t avatar_track_upload_v1(uint64_t handle, uint64_t id, const AvatarKeyV1 *keys, uint32_t count);
+int32_t avatar_track_sample_v1(uint64_t handle, uint64_t id, double time, double duration, AvatarPoseV1 *out);
+/* Reset clears uploaded tracks and selection state. Motion flags must be 0/1.
+   clip: 0 idle, 1 walk, 2 jump, 3 fall, 4 climb. dt [0,1], speed metres/second.
+   Host blends from its last rendered pose on changes; not an automatic renderer. */
+int32_t avatar_animation_reset_v1(uint64_t handle);
+int32_t avatar_animation_update_v1(uint64_t handle, double dt, const AvatarMotionV1 *motion, AvatarSelectionV1 *out);
+/* Canonical zero-padded ASCII: noob or 64 lowercase hexadecimal bytes + NUL. */
+typedef struct { uint8_t bytes[65]; } AvatarIdV1;
+typedef struct { uint32_t player; AvatarIdV1 avatar; } AvatarAssignmentV1;
+/* Configure at session setup: replaces catalogues and resets server/client state.
+   Max 256 IDs per list; NULL allowed for empty lists. */
+int32_t avatar_catalogue_configure_v1(uint64_t handle, const AvatarIdV1 *approved,
+    uint32_t approved_count, const AvatarIdV1 *installed, uint32_t installed_count);
+/* operation 0 join, 1 select, 2 leave; avatar required only for select.
+   Player identity MUST come from authenticated connection context. */
+int32_t avatar_catalogue_change_v1(uint64_t handle, uint32_t operation, uint32_t player, const AvatarIdV1 *avatar);
+/* output MUST contain 256 records. count/revision written on success only.
+   Snapshots use version 1; transport/server authentication is the host's job. */
+int32_t avatar_catalogue_snapshot_v1(uint64_t handle, AvatarAssignmentV1 *output, uint32_t *count, uint64_t *revision);
+int32_t avatar_catalogue_apply_v1(uint64_t handle, uint32_t version, uint64_t revision,
+    const AvatarAssignmentV1 *assignments, uint32_t count);
+int32_t avatar_catalogue_get_v1(uint64_t handle, uint32_t player, AvatarIdV1 *requested, AvatarIdV1 *resolved);
+int32_t avatar_catalogue_client_reset_v1(uint64_t handle);
 uint32_t avatar_abi_version(void);
 int32_t avatar_default_profile_v1(AvatarProfileV1 *out);
 uint64_t avatar_create_with_profile_v1(const AvatarProfileV1 *profile, double x, double y, double z);
