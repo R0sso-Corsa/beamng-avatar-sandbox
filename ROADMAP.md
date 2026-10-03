@@ -159,3 +159,13 @@ Requirement: users can choose the Roblox character or the typical BeamNG experie
 - [ ] Move remaining reusable input scheduling and avatar catalogue validation from Lua prototypes into Rust.
 - [ ] Expose gear transport and building preview in the C API.
 - [ ] Supply supported game adapters for camera, controls, geometry and rendering.
+
+## Debugging and on-screen controls
+
+- [x] Add local bounded telemetry, error counts and copyable UI debug reports.
+- [x] Add a BeamNG UI app for mod/mode/building/interaction and held movement controls with backend status.
+- [x] Verify telemetry routing, command whitelist, input release and UI teardown offline.
+- [ ] Verify the app in BeamNG, including layout, live status and focus/pause behavior.
+- [ ] Route future Rust/engine adapter failures into telemetry and add camera bindings.
+
+See [telemetry and controls](docs/TELEMETRY_AND_CONTROLS.md).
