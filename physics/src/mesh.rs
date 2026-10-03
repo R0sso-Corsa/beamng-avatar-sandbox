@@ -390,6 +390,35 @@ pub fn move_and_slide(
     }
     Err("slide contact limit")
 }
+/// Correct shallow overlaps without adding movement velocity. Total correction
+/// is bounded by Profile::recovery_distance; ambiguous/trapped starts may fail.
+pub fn recover_overlap(
+    p: Profile,
+    position: Vec3,
+    triangles: &[Triangle],
+) -> Result<Vec3, &'static str> {
+    Character::new(p, position)?;
+    validate(triangles)?;
+    let mut x = position;
+    let mut spent = 0.0;
+    for _ in 0..32 {
+        let deepest = triangles
+            .iter()
+            .map(|t| separation(p, x, *t))
+            .filter(|(gap, _)| *gap < -SKIN)
+            .min_by(|a, b| a.0.total_cmp(&b.0));
+        let Some((gap, normal)) = deepest else {
+            return Ok(x);
+        };
+        let distance = SKIN - gap;
+        spent += distance;
+        if spent > p.recovery_distance {
+            return Err("overlap exceeds recovery budget");
+        }
+        x = add(x, scale(normal, distance));
+    }
+    Err("overlap recovery iteration limit")
+}
 impl Character {
     /// Query a cached mesh using a conservative envelope including motor, jump,
     /// gravity, stair probes and ground snap. Narrow phase sees only candidates.
@@ -406,6 +435,7 @@ impl Character {
                 + p.jump_speed * DT
                 + p.gravity * DT * DT
                 + p.step_height
+                + p.recovery_distance
                 + 0.04
         });
         let radii = [p.radius, p.radius, p.height / 2.0];
@@ -417,7 +447,7 @@ impl Character {
     }
     /// Static mesh adapter around AVBD local tangent contacts, with a swept
     /// movement guard. This guard is kinematic; it is not an AVBD force solve.
-    /// Failed queries leave character state unchanged. No depenetration.
+    /// Failed queries leave character state unchanged; shallow overlaps recover.
     pub fn step_mesh(
         &mut self,
         input: Input,
@@ -426,7 +456,12 @@ impl Character {
         validate(triangles)?;
         let mut trial = self.clone();
         let p = self.profile;
-        let old = self.state.position;
+        let old = recover_overlap(p, self.state.position, triangles)?;
+        if old != self.state.position {
+            trial.state.position = old;
+            trial.state.velocity = [0.0; 3];
+            trial.contacts.clear();
+        }
         let slope = p.max_slope_degrees.to_radians().cos();
         let mut planes = Vec::new();
         let mut mesh_supported = false;
@@ -436,7 +471,8 @@ impl Character {
                 return Err("capsule starts overlapping mesh");
             }
             if gap < 0.002 && walkable(*t, normal, slope) {
-                mesh_supported |= dot(normal, self.state.velocity) <= 0.1;
+                mesh_supported |=
+                    dot(normal, trial.state.velocity) <= 0.1 || trial.state.velocity[2] <= 0.1;
                 if normal[2] >= slope {
                     planes.push(Plane {
                         id: t.id,
@@ -450,12 +486,14 @@ impl Character {
         let mut x = move_and_slide(p, old, tentative.position, triangles)?;
         let supported = planes
             .iter()
-            .any(|plane| dot(plane.normal, self.state.velocity) <= 0.1);
+            .any(|plane| dot(plane.normal, trial.state.velocity) <= 0.1);
         let horizontal = sub(tentative.position, old);
         let wanted = horizontal[0].hypot(horizontal[1]);
         let progress = (x[0] - old[0]).hypot(x[1] - old[1]);
         let walking = (supported || mesh_supported) && !input.jump;
         let mut stepped = false;
+        let mut descended = false;
+        let mut snapped = false;
         let blocked_steep = matches!(sweep(p,old,tentative.position,triangles),Ok(Some(hit)) if hit.normal[2]<slope);
         if walking
             && blocked_steep
@@ -489,24 +527,31 @@ impl Character {
                 }
             }
         }
-        // Short support probe bridges numerical separation and descending
-        // slopes, but deliberately does not snap across stair-sized drops.
+        // Grounded stair descent: do not snap airborne avatars or larger drops.
         if walking && !stepped {
-            let down = add(x, [0.0, 0.0, -0.03]);
+            let down = add(x, [0.0, 0.0, -p.step_height.max(0.03)]);
             if let Ok(Some(hit)) = sweep(p, x, down, triangles) {
-                if hit.normal[2] >= slope {
-                    x = add(x, scale(sub(down, x), hit.fraction));
+                let landing = add(x, scale(sub(down, x), hit.fraction));
+                if triangles.iter().any(|t| {
+                    let (gap, n) = separation(p, landing, *t);
+                    gap.abs() < 0.002 && walkable(*t, n, slope)
+                }) {
+                    snapped = true;
+                    descended = x[2] - landing[2] > 1e-8;
+                    x = landing;
                 }
             }
         }
         trial.state.position = x;
         trial.state.velocity = scale(sub(x, old), 1.0 / DT);
-        if stepped {
+        if stepped || descended {
             trial.state.velocity[2] = 0.0;
         }
         trial.state.grounded = triangles.iter().any(|t| {
             let (gap, n) = separation(p, x, *t);
-            gap.abs() < 0.002 && walkable(*t, n, slope) && dot(n, trial.state.velocity) <= 0.1
+            gap.abs() < 0.002
+                && walkable(*t, n, slope)
+                && (snapped || dot(n, trial.state.velocity) <= 0.1)
         });
         *self = trial;
         Ok(self.state)
@@ -780,5 +825,60 @@ mod tests {
             )
             .is_err());
         assert_eq!(before, c.state());
+    }
+    #[test]
+    fn overlap_recovery_is_bounded_and_does_not_launch_character() {
+        let p = Profile::default();
+        let floor = stair(0.2, None);
+        let mut c = Character::new(p, [0.0, 0.0, p.height / 2.0 - 0.02]).unwrap();
+        let state = c
+            .step_mesh(
+                Input {
+                    movement: [0.0; 2],
+                    jump: false,
+                },
+                &floor,
+            )
+            .unwrap();
+        assert!((state.position[2] - p.height / 2.0).abs() < 0.001);
+        assert!(state.velocity[2].abs() < 0.1);
+        let pos = recover_overlap(p, [0.25, 0.0, 1.0], &[wall()]).unwrap();
+        assert!((pos[0] - p.radius - SKIN).abs() < 1e-8);
+        let mut deep = Character::new(p, [0.0, 0.0, p.height / 2.0 - 0.2]).unwrap();
+        let before = deep.state();
+        assert!(deep
+            .step_mesh(
+                Input {
+                    movement: [0.0; 2],
+                    jump: false
+                },
+                &floor
+            )
+            .is_err());
+        assert_eq!(deep.state(), before);
+    }
+    #[test]
+    fn descends_small_step_but_falls_off_large_drop() {
+        let p = Profile::default();
+        for height in [0.15, 0.65] {
+            let mesh = StaticMesh::new(stair(height, None)).unwrap();
+            let mut c = Character::new(p, [2.0, 0.0, height + p.height / 2.0 + SKIN]).unwrap();
+            let mut airborne = false;
+            for _ in 0..120 {
+                let s = c
+                    .step_static_mesh(
+                        Input {
+                            movement: [-1.0, 0.0],
+                            jump: false,
+                        },
+                        &mesh,
+                    )
+                    .unwrap();
+                airborne |= !s.grounded;
+            }
+            assert_eq!(airborne, height > p.step_height);
+            assert!(c.state.position[0] < 0.5);
+            assert!((c.state.position[2] - p.height / 2.0).abs() < 0.003);
+        }
     }
 }
