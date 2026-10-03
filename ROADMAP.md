@@ -115,3 +115,13 @@ See [BeamNG integration](docs/BEAMNG_INTEGRATION.md) for runtime gates and conso
 - [ ] Verify action bindings, simulation delta and camera heading on BeamNG.
 
 See [block placement](docs/BLOCK_PLACEMENT.md) for the offline planner and remaining engine responsibilities.
+
+## Portable gears
+
+- [x] Add the seven Doomspire wiki gears as Rust equip/use commands with per-gear cooldowns.
+- [x] Add default-disabled building-tools opt-in and Lua placement-plan access.
+- [ ] Expose gears through host transport/C ABI.
+- [ ] Implement and validate projectile, damage, destruction, animation and visual adapters.
+- [ ] Verify gear behavior and building tools in BeamNG.
+
+See [gear scope and defaults](docs/GEARS.md).
