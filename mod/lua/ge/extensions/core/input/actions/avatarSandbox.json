@@ -62,5 +62,13 @@
     "onDown": "extensions.load('avatarSandbox_buildingTools'); avatarSandbox_buildingTools.toggle()",
     "title": "Avatar Sandbox: toggle building tools",
     "desc": "Opt in to the experimental building-tools planner. Runtime block creation is pending."
+  },
+  "avatarSandbox_characterMode": {
+    "cat": "menuExtra",
+    "order": 911,
+    "ctx": "tlua",
+    "onDown": "if avatarSandbox_main then avatarSandbox_main.toggleCharacterMode() end",
+    "title": "Avatar Sandbox: Roblox / BeamNG character",
+    "desc": "Choose Roblox avatar mode or normal BeamNG while the mod is enabled. Actual takeover requires a character adapter."
   }
 }
