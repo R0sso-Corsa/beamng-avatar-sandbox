@@ -14,5 +14,45 @@
     "onDown": "if avatarSandbox_main then avatarSandbox_main.interact() end",
     "title": "Avatar Sandbox: interact",
     "desc": "Interact with the current registered target (engine picking is pending)."
+  },
+  "avatarSandbox_forward": {
+    "cat": "menuExtra",
+    "order": 902,
+    "ctx": "tlua",
+    "onChange": "if avatarSandbox_driver then avatarSandbox_driver.setControl('forward', VALUE) end",
+    "title": "Avatar Sandbox: forward",
+    "desc": "Feeds the experimental physics driver when an adapter is attached. Bind manually; in-game verification pending."
+  },
+  "avatarSandbox_backward": {
+    "cat": "menuExtra",
+    "order": 903,
+    "ctx": "tlua",
+    "onChange": "if avatarSandbox_driver then avatarSandbox_driver.setControl('backward', VALUE) end",
+    "title": "Avatar Sandbox: backward",
+    "desc": "Feeds the experimental physics driver when an adapter is attached. Bind manually; in-game verification pending."
+  },
+  "avatarSandbox_left": {
+    "cat": "menuExtra",
+    "order": 904,
+    "ctx": "tlua",
+    "onChange": "if avatarSandbox_driver then avatarSandbox_driver.setControl('left', VALUE) end",
+    "title": "Avatar Sandbox: left",
+    "desc": "Feeds the experimental physics driver when an adapter is attached. Bind manually; in-game verification pending."
+  },
+  "avatarSandbox_right": {
+    "cat": "menuExtra",
+    "order": 905,
+    "ctx": "tlua",
+    "onChange": "if avatarSandbox_driver then avatarSandbox_driver.setControl('right', VALUE) end",
+    "title": "Avatar Sandbox: right",
+    "desc": "Feeds the experimental physics driver when an adapter is attached. Bind manually; in-game verification pending."
+  },
+  "avatarSandbox_jump": {
+    "cat": "menuExtra",
+    "order": 906,
+    "ctx": "tlua",
+    "onChange": "if avatarSandbox_driver then avatarSandbox_driver.setControl('jump', VALUE) end",
+    "title": "Avatar Sandbox: jump",
+    "desc": "Feeds the experimental physics driver when an adapter is attached. Bind manually; in-game verification pending."
   }
 }

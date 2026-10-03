@@ -107,3 +107,6 @@ See [cross-game support](docs/CROSS_GAME_SUPPORT.md) for the contract and runnab
 - [ ] Run the inventory on an installed BeamNG build and validate host APIs.
 
 See [BeamNG integration](docs/BEAMNG_INTEGRATION.md) for runtime gates and console commands.
+
+- [x] Prepare mock-tested GE input/fixed-step driver with pause, backlog and lifecycle handling.
+- [ ] Verify action bindings, simulation delta and camera heading on BeamNG.
