@@ -532,3 +532,5 @@ mod tests {
 
 pub mod catalogue;
 pub mod driver;
+
+pub mod animation;

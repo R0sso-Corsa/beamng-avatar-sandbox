@@ -180,3 +180,7 @@ See [telemetry and controls](docs/TELEMETRY_AND_CONTROLS.md).
 - [ ] Implement Rust clip sampling/blending and host pose application.
 
 See [rig mapping and export workflow](assets/source/r6_rig/README.md). No original clips have been imported or applied yet.
+
+- [x] Download six original R6 source assets into ignored local storage (two idle variants, walk, jump, fall, climb). Binary/XML conversion remains pending.
+- [x] Add validated Rust joint-track sampling, quaternion interpolation, pose blending, hold keys, loop/clamp timing.
+- [ ] Convert source keyframes and Roblox easing into Rust tracks; apply and visually validate against the supplied rig.
