@@ -20,7 +20,9 @@ The offline foundation below is implemented. Gameplay milestones remain pending;
 - [ ] Collect current R6 movement traces and calibrate acceleration, braking and air control.
 - [x] Add upright capsule clearance and exact infinite-plane sweep queries.
 - [x] Add an offline corridor/ceiling obstacle course with clearance assertions.
-- [ ] Add finite triangle/edge capsule collision, sweep-and-slide, friction and step handling.
+- [x] Add finite triangle face/edge/vertex queries and conservative capsule sweeps.
+- [x] Add sweep-and-slide and an offline freestanding-box mesh course.
+- [ ] Add stairs, slope/seam tuning, depenetration, friction and a map-scale broadphase.
 - [ ] Validate Rust/BeamNG transport and connect movement to avatar, camera and animations.
 - [ ] Verify stock map collision and moving platforms in BeamNG.
 - [ ] Add full rotational/articulated AVBD and vehicle coupling when required.
