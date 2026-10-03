@@ -1,0 +1,17 @@
+# Portable Doomspire-inspired gear foundation
+
+The [Doomspire Brickbattle Tools wiki](https://doomspire-brickbattle.fandom.com/wiki/Tools) lists Sword, Slingshot, Rocket Launcher, Trowel, Bomb, Superball and Paintball Gun. `physics/src/gear.rs` supplies all seven as an independently implemented Rust inventory/command system. No Roblox scripts or gear assets are included. Hosts supply collision, projectile motion, damage, destruction, sounds, animations and rendering; these are commands, not working BeamNG weapons.
+
+Equip with `GearSystem::equip`, advance cooldowns using simulation time, and activate with finite origin, aim direction and a compatible mode. Directions are normalized. Cooldowns belong to each gear and survive switching. Failed validation does not consume cooldown. Successful command emission consumes it even if a host later rejects the effect, so validate host prerequisites before activation. Multiplayer hosts must authorize commands and damage.
+
+Wiki-derived defaults: sword slash/lunge damage 10/30 and ~0.75 s cooldown; slingshot damage 16 and 0.2 s; rocket damage 100 and 7 s; trowel 4 s; bomb damage 100 and 5 s; superball damage 55 and 2 s; paintball damage 20 and 0.5 s. Rocket speed 60 studs/s and blast radius 4 studs become 18 m/s and 1.2 m at the project's 0.30 scale. Trowel wall dimensions 4x1x3 studs become 1.2x0.3x0.9 m. Slingshot bounce damage becomes zero; superball bounce damage halves.
+
+These are community-reported prototype defaults, not verified current Roblox behavior. The bomb's 3.8-second fuse is explicitly uncertain in the wiki, and an update-log entry reports a different sword cooldown. Unknown projectile speeds and paintball gravity are represented as `None`, requiring host configuration rather than invented constants. Paintball head/torso damage, paint/debris, sword idle contact and movement tricks, gradual wall construction/welding, explosion impulses, projectile lifetimes and bomb radius are not implemented. Core projectile commands cannot become playable without these host-side decisions.
+
+## Optional building-tools gear
+
+`Gear::BuildingTools` is disabled by default. `set_building_tools_enabled(true)` allows equipping and emitting place/remove commands; disabling it unequips it. This is our mod-owned placement/removal tool, not Roblox F3X or a claim to reproduce an unnamed building-tools asset. It is separate from the Trowel.
+
+BeamNG's optional `avatarSandbox_buildingTools` action toggles the user setting (bind manually). Load the planner separately with `extensions.load("avatarSandbox_placement")`. The building-tools extension delegates plans only while enabled and resets permission on mission end/unload. It does not spawn engine objects; see [block placement](BLOCK_PLACEMENT.md). No Rust gear transport or BeamNG combat adapter is attached yet. The Rust gear API is currently not exposed through the C ABI.
+
+Offline checks cover all seven gears, cooldowns, normalized/invalid aim, sword lunge, opt-in removal and revocation; Lua checks cover default-disabled building access and mission reset. No gameplay parity or in-game gear tests have been run.
