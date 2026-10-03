@@ -132,3 +132,6 @@ See [gear scope and defaults](docs/GEARS.md).
 - [ ] Add selection UI, rotation, appearance tools and undo/redo, then validate engine edits.
 
 See [avatar import and multiplayer delivery](docs/AVATAR_IMPORT.md) for the source format and proposed server-approved pack workflow.
+
+- [x] Add avatar-ID catalogues and mock-tested server-approved appearance snapshots, join/change/leave synchronization and missing-pack resolution.
+- [ ] Connect avatar selection UI, engine asset loading/rendering and live BeamMP events.
