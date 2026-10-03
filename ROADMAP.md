@@ -184,3 +184,7 @@ See [rig mapping and export workflow](assets/source/r6_rig/README.md). No origin
 - [x] Download six original R6 source assets into ignored local storage (two idle variants, walk, jump, fall, climb). Binary/XML conversion remains pending.
 - [x] Add validated Rust joint-track sampling, quaternion interpolation, pose blending, hold keys, loop/clamp timing.
 - [ ] Convert source keyframes and Roblox easing into Rust tracks; apply and visually validate against the supplied rig.
+
+- [x] Decode all six source assets offline and convert local pose tracks to JSON/quaternions.
+- [x] Compile/sample every converted clip through the Rust sampler offline.
+- [ ] Capture original Motor6D rest offsets and resolve idle path variants before retargeting.

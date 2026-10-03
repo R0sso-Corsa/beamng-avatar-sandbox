@@ -1,0 +1,8 @@
+[package]
+name = "avatar-rbx-convert"
+version = "0.1.0"
+edition = "2021"
+publish = false
+[dependencies]
+rbx_binary = "3.0.1"
+rbx_xml = "3.0.1"

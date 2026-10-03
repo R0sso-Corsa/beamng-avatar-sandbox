@@ -19,3 +19,16 @@ Next: import an actual clip, verify rest-pose and arm/leg rotation against Studi
 Six asset responses were downloaded through Roblox asset delivery to `assets/private/r6_animations/`; their local manifest records IDs, sizes and SHA-256 hashes. These are source files, not converted clips, and are not redistributed. Import them into Studio, verify each KeyframeSequence and use the exporter above.
 
 `physics/src/animation.rs` supplies typed local pose tracks with shortest-path quaternion interpolation and pose blending. Only linear and hold interpolation are supported at present; other Roblox easing must be baked or implemented before claiming matching playback. The sampler does not parse RBXM/JSON, retarget bind frames, choose character states or apply skinning. No clip has been applied to the supplied mesh yet.
+
+## Offline conversion progress
+
+`tools/rbx_convert` uses rbx_binary/rbx_xml to decode binary Roblox source assets to XML. These dependencies are isolated to the offline tool and locked in its Cargo.lock. `tools/convert_r6_animation.py` reads decoded XML and produces JSON plus typed Rust source for sampler verification. Run the decoder for binary files; the jump asset is already XML. Then run:
+
+```sh
+python3 tools/convert_r6_animation.py assets/private/r6_animations/walk.rbxmx assets/private/r6_animations/walk.json
+python3 tests/r6_animation_smoke.py
+```
+
+All six local originals have been converted and each track compiled/sampled with the Rust runtime. Pose matrices become normalized quaternions; source axes, units, hierarchy and timestamps remain unchanged. Only unit-weight linear easing is accepted; omitted easing uses the legacy linear default, which still needs comparison against Studio. Other styles are rejected rather than silently approximated.
+
+Walk has 22 keyframes, seven paths and a 0.666667-second duration. Idle clips contain both `/HumanoidRootPart/Torso/...` and `/Torso/...` paths. No automatic merging is performed: resolve these against Studio before retargeting. Source clips do not provide Motor6D C0/C1 offsets. The Studio exporter remains needed to capture the source rest frames, then map them to the supplied Blender skeleton. Converted data remains private/ignored and is not bundled in the mod. Character animation state selection and skinned rendering remain pending.
