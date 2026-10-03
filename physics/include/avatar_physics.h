@@ -34,6 +34,12 @@ uint64_t avatar_create(double x, double y, double z);
 int32_t avatar_destroy(uint64_t handle);
 int32_t avatar_set_mesh(uint64_t handle, const AvatarTriangle *triangles, uint32_t count);
 int32_t avatar_step(uint64_t handle, double movement_x, double movement_y, uint32_t jump);
+/* Platform triangles describe the previous pose and have IDs disjoint from
+   the uploaded static mesh. Advance their pose only after a successful step.
+   Carrier translation only; no rotation or continuous moving collision. */
+int32_t avatar_step_platform_v1(uint64_t handle, double movement_x, double movement_y,
+    uint32_t jump, const AvatarTriangle *platform, uint32_t count,
+    double displacement_x, double displacement_y, double displacement_z);
 int32_t avatar_get_state(uint64_t handle, AvatarState *out);
 #ifdef __cplusplus
 }
