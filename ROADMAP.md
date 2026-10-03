@@ -98,7 +98,7 @@ R15, additional animation states, custom animation packs, layered clothing, dyna
 - [x] Add managed handles, transactional static mesh upload, stepping and state snapshots.
 - [x] Run a separate C host smoke check on macOS.
 - [x] Expose validated configurable profiles through the C ABI and verify custom speed in the external C host.
-- [ ] Expose moving-platform support through the ABI.
+- [x] Expose the translating-platform prototype through the C ABI and verify carry/jump and validation in the external C host.
 - [ ] Validate Windows/Linux builds and a real game adapter.
 - [ ] Verify BeamNG native loading and host collision/rendering integration.
 
