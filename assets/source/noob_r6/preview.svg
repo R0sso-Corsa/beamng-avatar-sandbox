@@ -2,7 +2,7 @@
 <rect width="640" height="720" fill="#18202b"/>
 <text x="320" y="62" text-anchor="middle" fill="white" font-family="sans-serif" font-size="25">R6-style noob test character</text>
 <rect x="212.0" y="198.0" width="216.0" height="216.0" fill="#0d59d9" stroke="#18202b" stroke-width="2"/>
-<rect x="212.0" y="90.0" width="216.0" height="108.0" fill="#ffcc00" stroke="#18202b" stroke-width="2"/>
+<rect x="252.5" y="90.0" width="135.0" height="108.0" rx="13.5" fill="#ffcc00" stroke="#18202b" stroke-width="2"/>
 <rect x="428.0" y="198.0" width="108.0" height="216.0" fill="#ffcc00" stroke="#18202b" stroke-width="2"/>
 <rect x="104.0" y="198.0" width="108.0" height="216.0" fill="#ffcc00" stroke="#18202b" stroke-width="2"/>
 <rect x="320.0" y="414.0" width="108.0" height="216.0" fill="#33a626" stroke="#18202b" stroke-width="2"/>
