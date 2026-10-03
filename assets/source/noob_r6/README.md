@@ -20,3 +20,15 @@ Suggested joint positions (X, Y, Z) in metres:
 The OBJ is an editable source mesh, not a rigged or animated model and not yet a BeamNG walking-mode part. Armature setup, animation clips, BeamNG mesh/material conversion and controller attachment are pending. Source assets are intentionally outside `mod/` and excluded from the test ZIP.
 
 Regenerate with `python3 tools/create_noob_model.py`. `preview.svg` is a front-view design reference.
+
+## Original Roblox face texture
+
+To replace the generated smile with your own local Roblox default texture:
+
+```sh
+python3 tools/create_noob_model.py --face-texture /path/to/Roblox/content/textures/face.png
+```
+
+This creates a separate variant in `assets/private/noob_r6/` with the PNG, OBJ, MTL and preview. A UV-mapped transparent panel replaces the smile geometry and remains grouped with Head. Keep the three model files together when importing. The material references both colour and alpha; check transparency after import because OBJ readers differ in their support for alpha maps. BeamNG material conversion remains pending.
+
+The private variant and its embedded preview are ignored by Git. The shared source model retains the original generated smile as a fallback. Roblox's texture is user-supplied and is not redistributed by this repository.
