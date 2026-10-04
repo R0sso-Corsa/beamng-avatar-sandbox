@@ -12,7 +12,7 @@ local function text(y,h,value)
  t.BackgroundTransparency=1;t.TextColor3=Color3.new(1,1,1);t.TextSize=15;t.TextWrapped=true;t.Text=value;t.Parent=panel;return t
 end
 text(0,40,'STUDIO REFERENCE LAB • Roblox runtime')
-local status=text(40,100,'Waiting for character')
+local status=text(40,100,'Waiting for character');status.TextSize=12
 text(140,50,'1–7 gears | B building on/off | Q operation\nClick use/place/edit | R respawn | V avatar')
 local function button(y,title,callback)
  local b=Instance.new('TextButton');b.Position=UDim2.fromOffset(8,y);b.Size=UDim2.fromOffset(344,30)
