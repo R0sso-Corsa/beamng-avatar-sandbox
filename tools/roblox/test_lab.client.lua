@@ -20,7 +20,7 @@ local function button(y,title,callback)
 end
 local gears={'sword','slingshot','rocket','bomb','superball','trowel','paintball'}
 local index=3;local operations={'place','move','rotate','resize','delete'};local oi=1
-button(200,'Cycle gear',function() index=index%#gears+1;gear=gears[index] end)
+button(200,'Cycle gear',function() index=index%#gears+1;gear=gears[index];remote:FireServer('equip',gear) end)
 button(235,'Toggle building tools',function() building=not building end)
 button(270,'Cycle building operation',function() oi=oi%#operations+1;op=operations[oi] end)
 button(305,'Switch avatar / accessory',function() alternate=not alternate;remote:FireServer('avatar',alternate and 'alternate' or 'noob') end)
@@ -32,7 +32,7 @@ local errors=text(480,55,'Local diagnostics: no errors')
 game:GetService('ScriptContext').Error:Connect(function(message) errors.Text='Error: '..message:sub(1,100);warn('AVATAR_LAB_ERROR',message) end)
 UIS.InputBegan:Connect(function(input,processed)
  if processed then return end
- for i=1,7 do if input.KeyCode==Enum.KeyCode[({'One','Two','Three','Four','Five','Six','Seven'})[i]] then index=i;gear=gears[i] end end
+ for i=1,7 do if input.KeyCode==Enum.KeyCode[({'One','Two','Three','Four','Five','Six','Seven'})[i]] then index=i;gear=gears[i];remote:FireServer('equip',gear) end end
  if input.KeyCode==Enum.KeyCode.B then building=not building
  elseif input.KeyCode==Enum.KeyCode.Q then oi=oi%#operations+1;op=operations[oi]
  elseif input.KeyCode==Enum.KeyCode.R then remote:FireServer('reset')

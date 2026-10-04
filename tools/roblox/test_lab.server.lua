@@ -4,18 +4,21 @@ local Players=game:GetService('Players')
 local Debris=game:GetService('Debris')
 local remote=RS:WaitForChild('AvatarLab')
 local blocks=workspace:WaitForChild('AvatarLabBlocks')
+local Models=require(RS:WaitForChild('AvatarGearModels'))
+local gears={sword=true,slingshot=true,rocket=true,bomb=true,superball=true,trowel=true,paintball=true}
 local last={}
 local function spawn(player)
  local c=player.Character
- if c then c:WaitForChild('Humanoid').WalkSpeed=16;c.Humanoid.UseJumpPower=true;c.Humanoid.JumpPower=53;c.Humanoid.MaxSlopeAngle=45 end
+ if c then c:WaitForChild('Humanoid').WalkSpeed=16;c.Humanoid.UseJumpPower=true;c.Humanoid.JumpPower=53;c.Humanoid.MaxSlopeAngle=45;Models.equip(c,'rocket') end
 end
 Players.PlayerAdded:Connect(function(p) p.CharacterAdded:Connect(function() spawn(p) end) end)
 Players.PlayerRemoving:Connect(function(p) for key in pairs(last) do if key:match('^'..p.UserId..':') then last[key]=nil end end end)
 remote.OnServerEvent:Connect(function(p,action,data)
  local c=p.Character;local root=c and c:FindFirstChild('HumanoidRootPart');if not root then return end
- if action~='reset' and action~='outfit' and action~='avatar' and action~='build' and action~='fire' then return end
+ if action~='equip' and action~='reset' and action~='outfit' and action~='avatar' and action~='build' and action~='fire' then return end
  local now=os.clock();local key=p.UserId..':'..tostring(action)
  if now-(last[key] or -100)<0.15 then return end;last[key]=now
+ if action=='equip' then if type(data)=='string' and gears[data] then Models.equip(c,data) end;return end
  if action=='reset' then p:LoadCharacter();return end
  if action=='outfit' then
   local face=c.Head:FindFirstChildOfClass('Decal')
@@ -57,7 +60,7 @@ remote.OnServerEvent:Connect(function(p,action,data)
  if action~='fire' or type(data)~='table' then return end
  local gear=data.gear
  local cooldown={rocket=1.5,slingshot=0.25,superball=0.6,bomb=2,sword=0.6,trowel=1,paintball=0.2}
- if not cooldown[gear] then return end
+ if not cooldown[gear] or c:GetAttribute('EquippedGear')~=gear then return end
  local firekey=p.UserId..':gear';if now-(last[firekey] or -100)<cooldown[gear] then return end;last[firekey]=now
  local aim=data.position
  if typeof(aim)~='Vector3' or aim.X~=aim.X or aim.Y~=aim.Y or aim.Z~=aim.Z or (aim-root.Position).Magnitude<0.1 or (aim-root.Position).Magnitude>1000 then return end
@@ -67,21 +70,23 @@ remote.OnServerEvent:Connect(function(p,action,data)
   b:SetAttribute('Owner',p.UserId);b.Parent=blocks;return
  end
  if gear=='sword' then
+  local grip=c.HeldGear:FindFirstChild('GearGrip');local rest=grip.C0
+  grip.C0=rest*CFrame.Angles(0,0,math.rad(-65));task.delay(0.2,function() if grip.Parent then grip.C0=rest end end)
   local hit=Instance.new('Part');hit.Anchored=true;hit.CanCollide=false;hit.Size=Vector3.new(1,1,6)
   hit.CFrame=root.CFrame*CFrame.new(0,0,-4);hit.Color=Color3.new(1,1,1);hit.Parent=workspace;Debris:AddItem(hit,0.2);return
  end
- local b=Instance.new('Part');b.Shape=Enum.PartType.Ball;b.Size=Vector3.one*(gear=='bomb' and 2 or 1)
- b.Position=root.Position+Vector3.new(0,2,0)+root.CFrame.LookVector*3;b.Color=Color3.fromRGB(255,80,80);b.Parent=workspace
+ local position=root.Position+Vector3.new(0,2,0)+root.CFrame.LookVector*3
+ local b,container=Models.projectile(gear,position,(aim-position).Unit)
  b:SetNetworkOwner(nil);b.AssemblyLinearVelocity=(aim-b.Position).Unit*(gear=='rocket' and 100 or 55)
  if gear=='superball' then b.CustomPhysicalProperties=PhysicalProperties.new(1,0.2,0.9) end
  local touched=false
  b.Touched:Connect(function(part)
   if part:IsDescendantOf(c) or touched then return end
-  if gear=='paintball' then touched=true;if part:IsDescendantOf(blocks) then part.Color=Color3.fromRGB(80,200,255) end;b:Destroy() end
+  if gear=='paintball' then touched=true;if part:IsDescendantOf(blocks) then part.Color=Color3.fromRGB(80,200,255) end;container:Destroy() end
  end)
  if gear=='rocket' or gear=='bomb' then task.delay(gear=='bomb' and 3 or 1.5,function()
-  if b.Parent then local e=Instance.new('Explosion');e.Position=b.Position;e.BlastPressure=0;e.DestroyJointRadiusPercent=0;e.Parent=workspace;b:Destroy() end
+  if b.Parent then local e=Instance.new('Explosion');e.Position=b.Position;e.BlastPressure=0;e.DestroyJointRadiusPercent=0;e.Parent=workspace;container:Destroy() end
  end) end
- Debris:AddItem(b,6)
+ Debris:AddItem(container,6)
 end)
 print('AVATAR_LAB_SERVER_READY')

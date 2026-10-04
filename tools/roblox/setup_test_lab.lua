@@ -1,5 +1,8 @@
--- Command Bar installer: supply SERVER_SOURCE and LAB_CLIENT_SOURCE strings.
+-- Command Bar installer: supply SERVER_SOURCE, LAB_CLIENT_SOURCE and GEAR_MODELS_SOURCE strings.
 local RS=game:GetService('ReplicatedStorage')
+assert(type(GEAR_MODELS_SOURCE)=='string','Supply gear_models.lua source')
+local models=RS:FindFirstChild('AvatarGearModels') or Instance.new('ModuleScript')
+models.Name='AvatarGearModels';models.Source=GEAR_MODELS_SOURCE;models.Parent=RS
 local remote=RS:FindFirstChild('AvatarLab') or Instance.new('RemoteEvent');remote.Name='AvatarLab';remote.Parent=RS
 local scripts=game:GetService('ServerScriptService')
 local old=scripts:FindFirstChild('AvatarLab');if old then old:Destroy() end

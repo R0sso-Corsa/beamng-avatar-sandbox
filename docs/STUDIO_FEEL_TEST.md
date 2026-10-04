@@ -60,3 +60,14 @@ place, ownership replication, resize, accessory, missing-preset fallback and
 delete assertions. Move/rotate requests also ran without errors. Two-client
 presentation, every gear trajectory and subjective movement/camera feel remain
 manual checks. Run the smoke script in the client Command Bar during Play.
+
+### Gear models
+
+The installer now also requires GEAR_MODELS_SOURCE = `gear_models.lua` contents.
+Seven independently authored primitive models attach to the R6 right arm.
+Number keys/cycle button request server equip; fire requires the equipped gear.
+Sword activation changes its grip for a short slash; bomb/superball use matching
+ball models, rocket has a tube body and fins, and pellet/paintball sizes differ.
+These are Doomspire-inspired substitutes, not extracted Roblox meshes or exact
+weapon gameplay. They are currently Studio models; native host mesh export is
+not implemented. Startup and seven model/equip assertions passed in Studio.

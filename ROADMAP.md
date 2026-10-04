@@ -226,3 +226,5 @@ See [the complete offline checklist](docs/OFFLINE_CHECKLIST.md) for remaining lo
 
 See docs/STUDIO_FEEL_TEST.md. This lab uses Roblox native physics/networking;
 it is a reference harness, not a port of the Rust runtime into Studio.
+- [x] Studio Doomspire-style held models for all seven gears and matching projectile visuals.
+- [ ] Export gear meshes/materials for native game adapters.
