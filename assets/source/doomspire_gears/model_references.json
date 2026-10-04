@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "models": {
+    "sword": {
+      "size": [
+        1.0,
+        0.8,
+        4.0
+      ],
+      "color": 6512482,
+      "shape": 1,
+      "grip": [
+        0.0,
+        0.0,
+        -1.5,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "mesh": "rbxasset://fonts/sword.mesh",
+      "texture": "rbxasset://textures/SwordTexture.png",
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "slingshot": {
+      "size": [
+        2.0,
+        2.4,
+        1.0
+      ],
+      "color": 10724005,
+      "shape": 1,
+      "grip": [
+        0.0,
+        -0.7,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "mesh": "rbxasset://fonts/slingshot.mesh",
+      "texture": "rbxasset://textures/SlingshotTexture.png",
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "rocket": {
+      "size": [
+        4.0,
+        0.8,
+        1.0
+      ],
+      "color": 6512482,
+      "shape": 1,
+      "grip": [
+        1.0,
+        -0.667,
+        0.25,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "mesh": "rbxasset://fonts/rocketlauncher.mesh",
+      "texture": "rbxasset://textures/rocketlaunchertex.png",
+      "scale": [
+        0.75,
+        0.75,
+        0.75
+      ]
+    },
+    "trowel": {
+      "size": [
+        1.0,
+        4.0,
+        1.0
+      ],
+      "color": 14140826,
+      "shape": 1,
+      "grip": [
+        0.0,
+        -1.3,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "mesh": "rbxasset://fonts/trowel.mesh",
+      "texture": "rbxasset://textures/TrowelTexture.png",
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "bomb": {
+      "size": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "color": 10724005,
+      "shape": 0,
+      "grip": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "mesh": "rbxasset://fonts/timebomb.mesh",
+      "texture": "rbxasset://textures/bombtex.png",
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "superball": {
+      "size": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "color": 12855324,
+      "shape": 0,
+      "grip": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "paintball": {
+      "size": [
+        1,
+        3,
+        2
+      ],
+      "color": 10724005,
+      "shape": 1,
+      "grip": [
+        0.0,
+        0.400000006,
+        0.5,
+        1.0,
+        0.0,
+        -0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.0,
+        -0.0
+      ],
+      "mesh": "rbxasset://fonts/PaintballGun.mesh",
+      "texture": "rbxasset://textures/PaintballGunTex128.png",
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    }
+  },
+  "sources": [
+    "https://github.com/1alessandro/doomspire-brickbattle",
+    "https://github.com/Novetus/Novetus_src/blob/master/scripts/launcher/3DView.rbxl"
+  ],
+  "sourceSha256": "63b7f1ad50f34dab402b83de124b8db915716445a1da1eda344931f8d822bffe"
+}

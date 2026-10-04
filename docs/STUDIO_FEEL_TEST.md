@@ -71,3 +71,7 @@ ball models, rocket has a tube body and fins, and pellet/paintball sizes differ.
 These are Doomspire-inspired substitutes, not extracted Roblox meshes or exact
 weapon gameplay. They are currently Studio models; native host mesh export is
 not implemented. Startup and seven model/equip assertions passed in Studio.
+
+The held-model substitutes have now been replaced with original classic visual
+references. See assets/source/doomspire_gears/README.md for extraction provenance
+and limitations. All seven equip checks and all mesh/texture preload checks pass.
