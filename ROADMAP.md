@@ -213,3 +213,16 @@ See [the complete offline checklist](docs/OFFLINE_CHECKLIST.md) for remaining lo
 
 - [x] Evaluate six real AnimationTracks in Studio edit mode and compare 180 joint samples against Rust.
 - [x] Resolve captured climb rotation mismatch using separate R6 rotation-vector interpolation; all 271 recorded samples pass strict comparison.
+
+### Studio reference lab (local)
+
+- [x] Playable noob R6 reference with native walking/jumping/climbing animations.
+- [x] Camera obstruction course, first-person zoom and movement measurement HUD.
+- [x] Color/accessory, face/T-shirt sample and missing-preset fallback controls.
+- [x] Seven reference gear actions and optional block place/move/rotate/resize/delete.
+- [x] Server-owned lab objects, local diagnostics and repeatable interaction smoke test.
+- [ ] Two-client Studio presentation/ownership manual pass.
+- [ ] Compare captured Studio readings against Rust movement and camera behavior.
+
+See docs/STUDIO_FEEL_TEST.md. This lab uses Roblox native physics/networking;
+it is a reference harness, not a port of the Rust runtime into Studio.
