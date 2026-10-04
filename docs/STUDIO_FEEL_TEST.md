@@ -75,3 +75,20 @@ not implemented. Startup and seven model/equip assertions passed in Studio.
 The held-model substitutes have now been replaced with original classic visual
 references. See assets/source/doomspire_gears/README.md for extraction provenance
 and limitations. All seven equip checks and all mesh/texture preload checks pass.
+
+### Holding pose and rocket correction
+
+Equipped R6 characters play the classic tool-hold clip (182393478) at Action
+priority so locomotion does not lower the holding arm. The server-created
+Animator allows Roblox's normal character animation replication.
+
+Rockets now travel at 60 studs/s using server Heartbeat motion, unaffected by
+gravity. Each step raycasts the travel segment (excluding the firing character
+and rocket); impact creates the lab's visual-only explosion and removes it.
+A six-second lifetime bounds flight. This uses a center ray, not a swept-volume
+rocket collision. Other projectiles retain native gravity/bouncing.
+
+Verified in Play: arm-forward alignment 0.9998, hold animation active at Action
+priority, live remote fire creates an anchored rocket. smoke_gear_flight.lua
+passes horizontal flight without sag, speed tolerance, a 0.2-stud target-wall
+hit and impact cleanup. Rust/BeamNG behavior is unaffected by these lab fixes.

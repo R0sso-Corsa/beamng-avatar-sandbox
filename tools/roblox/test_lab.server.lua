@@ -76,15 +76,24 @@ remote.OnServerEvent:Connect(function(p,action,data)
   hit.CFrame=root.CFrame*CFrame.new(0,0,-4);hit.Color=Color3.new(1,1,1);hit.Parent=workspace;Debris:AddItem(hit,0.2);return
  end
  local position=root.Position+Vector3.new(0,2,0)+root.CFrame.LookVector*3
- local b,container=Models.projectile(gear,position,(aim-position).Unit)
- b:SetNetworkOwner(nil);b.AssemblyLinearVelocity=(aim-b.Position).Unit*(gear=='rocket' and 100 or 55)
+ local offset=aim-position;if offset.Magnitude<0.1 then return end
+ local direction=offset.Unit
+ local b,container=Models.projectile(gear,position,direction)
+ if gear=='rocket' then
+  Models.flyRocket(b,container,direction,c,function(hitPosition)
+   local e=Instance.new('Explosion');e.Position=hitPosition;e.BlastPressure=0
+   e.DestroyJointRadiusPercent=0;e.Parent=workspace
+  end)
+  return
+ end
+ b:SetNetworkOwner(nil);b.AssemblyLinearVelocity=direction*55
  if gear=='superball' then b.CustomPhysicalProperties=PhysicalProperties.new(1,0.2,0.9) end
  local touched=false
  b.Touched:Connect(function(part)
   if part:IsDescendantOf(c) or touched then return end
   if gear=='paintball' then touched=true;if part:IsDescendantOf(blocks) then part.Color=Color3.fromRGB(80,200,255) end;container:Destroy() end
  end)
- if gear=='rocket' or gear=='bomb' then task.delay(gear=='bomb' and 3 or 1.5,function()
+ if gear=='bomb' then task.delay(3,function()
   if b.Parent then local e=Instance.new('Explosion');e.Position=b.Position;e.BlastPressure=0;e.DestroyJointRadiusPercent=0;e.Parent=workspace;container:Destroy() end
  end) end
  Debris:AddItem(container,6)

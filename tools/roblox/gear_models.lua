@@ -43,4 +43,25 @@ function M.projectile(name,position,direction)
  else p.Size=Vector3.one*(name=='slingshot' and 0.35 or 0.45);p.Color=name=='slingshot' and colors.metal or colors.blue;p.Position=position end
  p.Parent=workspace;return p,p
 end
+-- Anchored, swept flight avoids gravity sag and collision tunnelling.
+function M.flyRocket(projectile,container,direction,owner,onImpact)
+ assert(direction.Magnitude>0,'Missing rocket direction')
+ direction=direction.Unit
+ projectile.Anchored=true;projectile.CanCollide=false;projectile.CanTouch=false
+ local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude
+ params.FilterDescendantsInstances={owner,container}
+ local fire=Instance.new('Fire');fire.Size=2;fire.Heat=0;fire.Parent=projectile
+ local age=0;local connection
+ connection=game:GetService('RunService').Heartbeat:Connect(function(dt)
+  if not projectile.Parent then connection:Disconnect();return end
+  local travel=direction*60*dt
+  local hit=workspace:Raycast(projectile.Position,travel,params)
+  if hit then
+   connection:Disconnect();onImpact(hit.Position);container:Destroy();return
+  end
+  projectile.CFrame=projectile.CFrame+travel
+  age+=dt
+  if age>=6 then connection:Disconnect();container:Destroy() end
+ end)
+end
 return M

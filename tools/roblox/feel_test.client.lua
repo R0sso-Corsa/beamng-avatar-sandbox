@@ -24,6 +24,17 @@ local function configure(character)
   track.Priority = name=='idle' and Enum.AnimationPriority.Idle or Enum.AnimationPriority.Movement
   track.Looped = name~='jump'; tracks[name] = track
  end
+ -- Classic R6 tool-hold clip overrides the equipped arm above locomotion.
+ local holdAnimation=Instance.new('Animation');holdAnimation.AnimationId='rbxassetid://182393478'
+ local hold=animator:LoadAnimation(holdAnimation);hold.Priority=Enum.AnimationPriority.Action;hold.Looped=true
+ local function updateHold()
+  if character:GetAttribute('EquippedGear') then
+   if not hold.IsPlaying then hold:Play(0.1) end
+  else hold:Stop(0.1) end
+ end
+ character:GetAttributeChangedSignal('EquippedGear'):Connect(updateHold)
+ humanoid.Died:Connect(function() hold:Stop(0) end)
+ updateHold()
  local current
  local function play(name,rate)
   if current~=name then
