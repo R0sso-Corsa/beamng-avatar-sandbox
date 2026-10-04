@@ -1,5 +1,11 @@
--- Command Bar installer: supply SERVER_SOURCE, LAB_CLIENT_SOURCE and GEAR_MODELS_SOURCE strings.
+-- Command Bar installer: supply SERVER_SOURCE, LAB_CLIENT_SOURCE, GEAR_MODELS_SOURCE,
+-- SWORD_SERVER_SOURCE (doomspire_sword.server.lua) and SWORD_SUPPORT_SOURCE (sword_support.lua).
 local RS=game:GetService('ReplicatedStorage')
+assert(type(SWORD_SERVER_SOURCE)=='string' and type(SWORD_SUPPORT_SOURCE)=='string','Supply sword sources')
+local support=RS:FindFirstChild('AvatarSwordSupport') or Instance.new('ModuleScript')
+support.Name='AvatarSwordSupport';support.Source=SWORD_SUPPORT_SOURCE;support.Parent=RS
+local sword=RS:FindFirstChild('AvatarDoomspireSwordScript') or Instance.new('Script')
+sword.Name='AvatarDoomspireSwordScript';sword.Disabled=true;sword.Source=SWORD_SERVER_SOURCE;sword.Parent=RS
 assert(type(GEAR_MODELS_SOURCE)=='string','Supply gear_models.lua source')
 local models=RS:FindFirstChild('AvatarGearModels') or Instance.new('ModuleScript')
 models.Name='AvatarGearModels';models.Source=GEAR_MODELS_SOURCE;models.Parent=RS

@@ -23,6 +23,22 @@ M.build=build
 function M.equip(character,name)
  local old=character:FindFirstChild('HeldGear');if old then old:Destroy() end
  local arm=character:FindFirstChild('Right Arm');if not arm then return end
+ if name=='sword' then
+  local model=build(name);local handle=model.PrimaryPart
+  local tool=Instance.new('Tool');tool.Name='HeldGear';tool.CanBeDropped=false;tool.ManualActivationOnly=true
+  tool.Grip=model:GetAttribute('SourceGrip');handle.Parent=tool;handle.CanTouch=true;model:Destroy()
+  local damage=Instance.new('IntValue');damage.Name='damage';damage.Value=5;damage.Parent=tool
+  local activate=Instance.new('BindableEvent');activate.Name='AvatarLabActivate';activate.Parent=tool
+  for sound,id in pairs({SwordSlash=12222216,SwordLunge=12222208,Unsheath=12222225}) do
+   local v=Instance.new('Sound');v.Name=sound;v.SoundId='rbxassetid://'..id;v.Volume=sound=='SwordLunge' and 0.6 or (sound=='Unsheath' and 1 or 0.7);v.Parent=handle
+  end
+  local a=Instance.new('Attachment',handle);a.Position=Vector3.new(0,0,-2)
+  local b=Instance.new('Attachment',handle);b.Position=Vector3.new(0,0,2)
+  local trail=Instance.new('Trail');trail.Name='Trail';trail.Attachment0=a;trail.Attachment1=b;trail.Enabled=false;trail.Parent=handle
+  local script=game.ReplicatedStorage.AvatarDoomspireSwordScript:Clone();script.Disabled=true;script.Parent=tool
+  tool.Parent=character;character.Humanoid:EquipTool(tool);script.Disabled=false
+  handle.Unsheath:Play();character:SetAttribute('EquippedGear',name);return tool
+ end
  local model=build(name);model.Name='HeldGear';model:PivotTo(arm.CFrame*CFrame.new(0,-1,0)*CFrame.Angles(math.rad(-90),0,0)*model:GetAttribute('SourceGrip'):Inverse());model.Parent=character
  local grip=Instance.new('Weld');grip.Name='GearGrip';grip.Part0=arm;grip.Part1=model.PrimaryPart
  grip.C0=arm.CFrame:ToObjectSpace(model.PrimaryPart.CFrame);grip.Parent=model
@@ -38,7 +54,7 @@ function M.projectile(name,position,direction)
   return p,visual
  elseif name=='rocket' then
   p.Size=Vector3.new(2,0.6,0.6);p.Shape=Enum.PartType.Cylinder;p.Color=colors.dark
-  p.CFrame=CFrame.lookAt(position,position+direction)*CFrame.Angles(0,math.pi/2,0)
+  p.CFrame=CFrame.lookAt(position,position+direction)
   local mesh=Instance.new('SpecialMesh');mesh.MeshType=Enum.MeshType.FileMesh;mesh.MeshId='rbxassetid://2251534';mesh.Scale=Vector3.new(0.35,0.35,0.25);mesh.Parent=p
  else p.Size=Vector3.one*(name=='slingshot' and 0.35 or 0.45);p.Color=name=='slingshot' and colors.metal or colors.blue;p.Position=position end
  p.Parent=workspace;return p,p
@@ -59,7 +75,8 @@ function M.flyRocket(projectile,container,direction,owner,onImpact)
   if hit then
    connection:Disconnect();onImpact(hit.Position);container:Destroy();return
   end
-  projectile.CFrame=projectile.CFrame+travel
+  local nextPosition=projectile.Position+travel
+  projectile.CFrame=CFrame.lookAt(nextPosition,nextPosition+direction)
   age+=dt
   if age>=6 then connection:Disconnect();container:Destroy() end
  end)

@@ -6,6 +6,7 @@ pub mod camera;
 pub mod ffi;
 pub mod gear;
 pub mod mesh;
+pub mod sword;
 
 pub type Vec3 = [f64; 3];
 fn dot(a: Vec3, b: Vec3) -> f64 {

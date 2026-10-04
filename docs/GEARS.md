@@ -33,3 +33,11 @@ This is a partial F3X-inspired foundation, not the original plugin or its code/a
 A collision segment is a chord of the ballistic trajectory, so keep simulation steps small. Projectile radius, swept collision queries, target IDs, body-region modifiers, owner filtering, damage application, explosion falloff and impulses remain host responsibilities. Impact response discards the remaining travel in that step instead of processing multiple bounces; lifespan still consumes the step's elapsed time. No projectile assets or C ABI transport are attached. `BombTimer` emits nominal explosion damage once when the provisional fuse elapses; the host supplies radius, location and impulse.
 
 Offline regression checks cover gravity, rocket gravity immunity, reflected/halved superball hits, invalid-hit rollback, expiry, rocket explosion and one-shot bomb timers. All 17 Rust tests pass; BeamNG combat remains unimplemented.
+
+### Source sword and projectile orientation
+
+The Studio sword now uses the preserved Doomspire server script with lab activation/player lookup and source-equivalent lift cleanup; see `assets/source/doomspire_gears/sword/README.md`. It plays classic R6 slash/lunge animations and uses native Tool grip/contact handling. Rust `sword::Sword` exposes timing, grip, lift and contact filtering through `GearSystem::sword_pose()`. A host must consume these outputs; this is not yet BeamNG animation integration or a new C ABI export.
+
+Rust `Projectile::facing()` returns a Z-up orthonormal frame aligned with current velocity, including vertical flight and reflected velocity. Hosts map their mesh's nose axis onto forward. Studio's original rocket mesh points along local -Z, so its CFrame now looks directly along flight direction at spawn and every flight step, without the old 90-degree offset.
+
+Verified: 27 Rust tests; Studio source sword lunge timing, grip, lift cleanup and damage reset; classic slash/lunge clips loaded and playing; rocket heading alignment. BeamNG validation remains pending.

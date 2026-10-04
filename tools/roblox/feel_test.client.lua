@@ -35,6 +35,17 @@ local function configure(character)
  character:GetAttributeChangedSignal('EquippedGear'):Connect(updateHold)
  humanoid.Died:Connect(function() hold:Stop(0) end)
  updateHold()
+ local swordTracks={}
+ for name,id in pairs({Slash=129967390,Lunge=129967478}) do
+  local a=Instance.new('Animation');a.AnimationId='rbxassetid://'..id
+  local t=animator:LoadAnimation(a);t.Priority=Enum.AnimationPriority.Action2;t.Looped=false;swordTracks[name]=t
+ end
+ character.DescendantAdded:Connect(function(v)
+  if v:IsA('StringValue') and v.Name=='toolanim' then
+   local t=swordTracks[v.Value]
+   if t then for _,old in pairs(swordTracks) do old:Stop(0) end;t:Play(0);game:GetService('Debris'):AddItem(v,0.3) end
+  end
+ end)
  local current
  local function play(name,rate)
   if current~=name then

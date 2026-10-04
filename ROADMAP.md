@@ -228,3 +228,7 @@ See docs/STUDIO_FEEL_TEST.md. This lab uses Roblox native physics/networking;
 it is a reference harness, not a port of the Rust runtime into Studio.
 - [x] Studio Doomspire-style held models for all seven gears and matching projectile visuals.
 - [ ] Export gear meshes/materials for native game adapters.
+
+- [x] Preserve the downloaded Doomspire sword server source; adapt lab activation and play classic slash/lunge clips.
+- [x] Port source sword timing, contact filtering, grip and lift requests to Rust; expose velocity-aligned projectile render frames.
+- [ ] Apply Rust sword outputs and projectile render frames in native host adapters; validate contacts, animation and forces in BeamNG.

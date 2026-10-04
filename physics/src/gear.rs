@@ -54,8 +54,12 @@ pub struct GearSystem {
     equipped: Option<Gear>,
     building_tools: bool,
     remaining: [f64; 8],
+    sword: crate::sword::Sword,
 }
 impl GearSystem {
+    pub fn sword_pose(&self) -> crate::sword::SwordPose {
+        self.sword.pose()
+    }
     pub fn equipped(&self) -> Option<Gear> {
         self.equipped
     }
@@ -76,6 +80,7 @@ impl GearSystem {
         if !seconds.is_finite() || seconds < 0.0 {
             return Err("invalid elapsed time");
         }
+        self.sword.advance(seconds)?;
         for t in &mut self.remaining {
             *t = (*t - seconds).max(0.0);
         }
@@ -107,16 +112,15 @@ impl GearSystem {
             return Err("unsupported gear mode");
         }
         let (effect, cooldown) = match gear {
-            Gear::Sword => (
-                Effect::Melee {
-                    damage: if mode == UseMode::SwordLunge {
-                        30.0
-                    } else {
-                        10.0
+            Gear::Sword => {
+                let attack = self.sword.activate(mode == UseMode::SwordLunge)?;
+                (
+                    Effect::Melee {
+                        damage: attack.damage(),
                     },
-                },
-                0.75,
-            ),
+                    0.0,
+                )
+            }
             Gear::Slingshot => (
                 Effect::Projectile {
                     damage: 16.0,
@@ -268,7 +272,40 @@ pub struct Projectile {
     active: bool,
     stop_on_surface: bool,
 }
+/// Z-up render frame; host maps the mesh's local nose axis onto forward.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct FlightFrame {
+    pub forward: Vec3,
+    pub right: Vec3,
+    pub up: Vec3,
+}
+fn cross(a: Vec3, b: Vec3) -> Vec3 {
+    [
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    ]
+}
 impl Projectile {
+    /// Recompute after each step/impact so bounced projectiles face their velocity.
+    pub fn facing(&self) -> Result<FlightFrame, &'static str> {
+        let length = self.velocity.iter().map(|v| v * v).sum::<f64>().sqrt();
+        if !length.is_finite() || length < 1e-9 {
+            return Err("invalid projectile heading");
+        }
+        let forward = self.velocity.map(|v| v / length);
+        let reference = if forward[2].abs() > 0.999 {
+            [0.0, 1.0, 0.0]
+        } else {
+            [0.0, 0.0, 1.0]
+        };
+        let right = cross(forward, reference);
+        let norm = right.iter().map(|v| v * v).sum::<f64>().sqrt();
+        let right = right.map(|v| v / norm);
+        let up = cross(right, forward);
+        Ok(FlightFrame { forward, right, up })
+    }
+
     pub fn new(command: Command, config: ProjectileConfig) -> Result<Self, &'static str> {
         let Effect::Projectile {
             damage,
@@ -531,5 +568,65 @@ mod projectile_tests {
         assert_eq!(bomb.advance(3.0).unwrap(), None);
         assert_eq!(bomb.advance(1.0).unwrap(), Some(100.0));
         assert_eq!(bomb.advance(1.0).unwrap(), None);
+    }
+    #[test]
+    fn projectile_facing_tracks_velocity_including_vertical_and_bounce() {
+        for direction in [[1.0, 2.0, 3.0], [0.0, 0.0, 1.0], [0.0, 0.0, -1.0]] {
+            let mut gears = GearSystem::default();
+            gears.equip(Gear::Rocket).unwrap();
+            let mut rocket = Projectile::new(
+                gears
+                    .activate([0.0; 3], direction, UseMode::Primary)
+                    .unwrap(),
+                ProjectileConfig {
+                    speed: 18.0,
+                    gravity: 58.86,
+                    lifetime: 6.0,
+                },
+            )
+            .unwrap();
+            rocket.advance(0.2, None).unwrap();
+            let frame = rocket.facing().unwrap();
+            let norm = direction.iter().map(|v| v * v).sum::<f64>().sqrt();
+            for i in 0..3 {
+                assert!((frame.forward[i] - direction[i] / norm).abs() < 1e-9);
+            }
+            for axis in [frame.forward, frame.right, frame.up] {
+                assert!((axis.iter().map(|v| v * v).sum::<f64>() - 1.0).abs() < 1e-9);
+            }
+            assert!(
+                frame
+                    .right
+                    .iter()
+                    .zip(frame.forward)
+                    .map(|(a, b)| a * b)
+                    .sum::<f64>()
+                    .abs()
+                    < 1e-9
+            );
+        }
+        let mut gears = GearSystem::default();
+        gears.equip(Gear::Superball).unwrap();
+        let mut ball = Projectile::new(
+            gears
+                .activate([0.0; 3], [1.0, 0.0, 0.0], UseMode::Primary)
+                .unwrap(),
+            ProjectileConfig {
+                speed: 18.0,
+                gravity: 58.86,
+                lifetime: 6.0,
+            },
+        )
+        .unwrap();
+        ball.advance(
+            0.1,
+            Some(Impact {
+                fraction: 0.5,
+                normal: [-1.0, 0.0, 0.0],
+                player: false,
+            }),
+        )
+        .unwrap();
+        assert!(ball.facing().unwrap().forward[0] < 0.0);
     }
 }
