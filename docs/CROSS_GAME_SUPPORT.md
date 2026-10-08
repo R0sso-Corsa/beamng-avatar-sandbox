@@ -4,6 +4,10 @@
 
 # Cross-game support: C ABI v1
 
+The active two-game route now has a separate [Studio passthrough bridge](PASSTHROUGH.md).
+The C ABI below remains the optional recreation backend. It is not used to
+simulate the native Studio guest.
+
 The dependency-free Rust core now builds as `rlib`, `cdylib` and `staticlib`. A game plugin can call the same simulation through `physics/include/avatar_physics.h`; it does not need to embed Rust or copy the physics into its game engine. This interface is a foundation, not a working plugin for any game.
 
 ## Contract

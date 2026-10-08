@@ -1,5 +1,29 @@
 # Prototype roadmap
 
+## Active direction: two-game passthrough — 8 October 2026
+
+Use native Roblox Studio for the guest simulation instead of continuing the
+Rust recreation as the primary gameplay route. Preserve the existing core as
+an optional backend and reference. See [setup/evidence](docs/PASSTHROUGH.md)
+and [ownership/protocol](docs/CONTRACT.md).
+
+- [x] Define local ownership, coordinate mapping, bounded snapshots, lease expiry and restart contract.
+- [x] Implement a Rust localhost HTTP/UDP relay and private session configuration.
+- [x] Export native R6 part and camera transforms from a local Studio player.
+- [x] Forward host movement/jump intents into native Humanoid controls; mirror static box colliders.
+- [x] Verify a real Studio guest with a synthetic host: walk, wall collision, animated poses, jump states, graceful disable and lost-host recovery.
+- [x] Prepare and mock-test a nonblocking opt-in BeamNG diagnostic transport extension.
+- [ ] Load that extension in BeamNG and verify LuaSocket/API availability and advancing guest poses.
+- [ ] Draw the guest avatar in BeamNG with correct scale, facing, depth and materials.
+- [ ] Extract nearby stock-map collision and mirror it into Studio; add moving vehicles safely.
+- [ ] Connect BeamNG input, camera, mode toggle and focus/pause ownership with reliable restoration.
+- [ ] Improve measured transport latency beyond the 5 Hz HTTP connectivity prototype.
+- [ ] Bridge native gear activation, effects and block editing with reliable event acknowledgements.
+- [ ] Add avatar mesh/material/texture transfer, packaging and multiplayer ownership tests.
+
+No normal RobloxPlayer integration, renderer compositing or BeamNG runtime
+compatibility is claimed by the Studio/synthetic-host checks.
+
 The offline foundation below is implemented. Gameplay milestones remain pending; advance when the acceptance checks pass in the target BeamNG installation.
 
 ## Offline foundation
@@ -99,7 +123,6 @@ Acceptance: another user can import a compatible avatar using the documented pro
 
 R15, additional animation states, custom animation packs, layered clothing, dynamic heads, movable blocks, persistence, multiplayer, and automated online avatar retrieval.
 
-
 ## Cross-game portability
 
 - [x] Build Rust, shared and static libraries with a versioned C ABI.
@@ -142,7 +165,6 @@ See [avatar import and multiplayer delivery](docs/AVATAR_IMPORT.md) for the sour
 
 - [x] Add offline projectile trajectories, host-fed impact/bounce events, lifetimes and one-shot bomb timers.
 - [ ] Connect projectile collision shapes, damage/destruction and visual effects to host adapters.
-
 
 ## Optional character mode and Roblox-style camera
 

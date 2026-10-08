@@ -4,7 +4,10 @@
 
 The versioned C library is reusable by hosts that permit native plugins. It is not evidence that BeamNG.drive can load it. In an [October 2022 developer response](https://www.beamng.com/threads/loading-lua-c-dll.88622/), BeamNG team member tdev explained that the mod Lua sandbox blocked loading via `ffi.load`/`package.loadlib` and treated a workaround as a security issue. This historical statement is stronger evidence than assuming that LuaJIT implies unrestricted FFI. That is not evidence that external DLL injection is blocked. Injection, Lua loading and supported native interfaces are separate mechanisms. The current installed game build has not been tested here; no supported custom-library route was established in this research.
 
-The [official extension documentation](https://docs.beamng.com/modding/programming/extensions/) supports GE Lua extensions and explicit extension loading. This is our current integration surface. Do not ship the Rust library in the mod ZIP expecting it to execute. A companion Rust process could be investigated if a supported local communication route exists, but that transport, latency, packaging and collision data access are all unresolved. No sidecar connection is implemented.
+The [official extension documentation](https://docs.beamng.com/modding/programming/extensions/) supports GE Lua extensions and explicit extension loading. This is our current integration surface. Do not ship the Rust library in the mod ZIP expecting it to execute. A companion Rust process could be investigated if a supported local communication route exists, but that transport, latency, packaging and collision data access are all unresolved. A local Rust sidecar is now implemented for the Studio passthrough prototype;
+its Studio HTTP and synthetic-host UDP paths have run on macOS. The prepared
+BeamNG LuaSocket extension has only mock checks. See [passthrough setup](PASSTHROUGH.md).
+Its existence does not establish LuaSocket availability in the installed game.
 
 ## Read-only runtime inventory
 

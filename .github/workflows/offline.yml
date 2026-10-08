@@ -8,6 +8,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - run: cargo test --manifest-path bridge/Cargo.toml
+      - run: cargo build --release --manifest-path bridge/Cargo.toml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: local-bridge-${{ matrix.os }}
+          path: |
+            bridge/target/release/avatar-bridge
+            bridge/target/release/avatar-bridge.exe
+          if-no-files-found: error
       - run: cargo test --manifest-path physics/Cargo.toml
       - run: cargo build --release --manifest-path physics/Cargo.toml
       - uses: actions/upload-artifact@v4
