@@ -107,6 +107,18 @@ pub unsafe extern "C" fn avatar_create_with_profile_v1(
     }
     create(unsafe { profile.read() }.into(), [x, y, z])
 }
+/// # Safety
+/// out points to one writable, aligned profile throughout the call.
+#[no_mangle]
+pub unsafe extern "C" fn avatar_studio_r6_profile_v1(out: *mut AvatarProfileV1) -> i32 {
+    if out.is_null() {
+        return -2;
+    }
+    unsafe {
+        out.write(Profile::studio_r6_reference().into());
+    }
+    0
+}
 struct Instance {
     tracks: BTreeMap<u64, crate::animation::Track>,
     animator: crate::animation_state::Animator,
@@ -299,6 +311,84 @@ pub extern "C" fn avatar_camera_active_v1(handle: u64, active: u32) -> i32 {
     };
     i.camera.set_active(active == 1);
     0
+}
+/// Opt-in camera preset; does not activate or take over a host camera.
+#[no_mangle]
+pub extern "C" fn avatar_camera_classic_v1(handle: u64, metres_per_stud: f64) -> i32 {
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    if i.camera.enable_classic(metres_per_stud).is_ok() {
+        0
+    } else {
+        -2
+    }
+}
+#[no_mangle]
+pub extern "C" fn avatar_camera_distance_v1(handle: u64, metres: f64) -> i32 {
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    if i.camera.set_distance(metres).is_ok() {
+        0
+    } else {
+        -2
+    }
+}
+/// safe_distance is a host-computed clearance in metres; -1 means unobstructed.
+#[no_mangle]
+pub extern "C" fn avatar_camera_advance_v1(handle: u64, dt: f64, safe_distance: f64) -> i32 {
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    let safe = if safe_distance == -1.0 {
+        None
+    } else {
+        Some(safe_distance)
+    };
+    if i.camera.advance(dt, safe).is_ok() {
+        0
+    } else {
+        -2
+    }
+}
+/// Capped velocity feedback. Zero restores the original motor.
+#[no_mangle]
+pub extern "C" fn avatar_motor_response_v1(handle: u64, rate: f64) -> i32 {
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    if i.character.set_motor_response(rate).is_ok() {
+        0
+    } else {
+        -2
+    }
+}
+#[no_mangle]
+pub extern "C" fn avatar_motor_caps_v1(handle: u64, ground: f64, air: f64) -> i32 {
+    let Ok(mut r) = registry().lock() else {
+        return -3;
+    };
+    let Some(i) = r.instances.get_mut(&handle) else {
+        return -1;
+    };
+    if i.character.set_motor_caps(ground, air).is_ok() {
+        0
+    } else {
+        -2
+    }
 }
 #[no_mangle]
 pub extern "C" fn avatar_camera_look_v1(handle: u64, yaw: f64, pitch: f64) -> i32 {

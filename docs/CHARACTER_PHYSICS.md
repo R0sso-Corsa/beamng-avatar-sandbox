@@ -2,6 +2,11 @@
 
 Research date: 3 October 2026. This is a behavioural recreation, not a reconstruction of Roblox's proprietary engine. Community numbers below are historical reports, not measurements we have reproduced. BeamNG integration is untested.
 
+Update, 6 October: [native R6 calibration](NATIVE_CALIBRATION.md) now includes local
+Studio measurements, independent Rust replays, an opt-in feedback motor and
+camera spring. The historical prototype defaults below remain available.
+The selected flat-ground and airborne fits do not establish complete parity.
+
 ## Evidence and working values
 
 | Quantity | Evidence | Prototype treatment |

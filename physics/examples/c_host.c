@@ -4,6 +4,10 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <stddef.h>
+_Static_assert(sizeof(AvatarProfileV1)==112, "profile ABI layout");
+_Static_assert(sizeof(AvatarState)==56 && offsetof(AvatarState,grounded)==48, "state ABI layout");
+_Static_assert(sizeof(AvatarCameraPoseV1)==80 && offsetof(AvatarCameraPoseV1,heading)==56, "camera ABI layout");
 int main(void) {
     assert(avatar_abi_version() == 1);
     uint64_t avatar = avatar_create(0, 0, 0.7651);
@@ -69,6 +73,34 @@ int main(void) {
     assert(avatar_camera_pose_v1(avatar,focus,eye,0.5,&camera)==0);
     assert(camera.first_person==0 && fabs(camera.actual_distance-1.9)<1e-10);
     assert(avatar_camera_look_v1(avatar,NAN,0)==-2);
+    assert(avatar_destroy(avatar)==0);
+    /* Additive calibration APIs; frozen structs and legacy camera still work. */
+    assert(avatar_studio_r6_profile_v1(&profile)==0);
+    assert(avatar_studio_r6_profile_v1(NULL)==-2);
+    assert(profile.ground_acceleration>220 && profile.air_acceleration>42);
+    avatar=avatar_create_with_profile_v1(&profile,0,0,profile.height/2+0.0001);
+    assert(avatar && avatar_set_mesh(avatar,&floor,1)==0);
+    assert(avatar_motor_response_v1(avatar,150)==0);
+    assert(avatar_motor_response_v1(avatar,NAN)==-2);
+    assert(avatar_motor_response_v1(avatar,241)==-2);
+    for (int i=0;i<240;++i) assert(avatar_step(avatar,0.5,0,0)==0);
+    assert(avatar_get_state(avatar,&state)==0 && fabs(state.velocity[0]-2.4)<1e-8);
+    assert(avatar_motor_caps_v1(avatar,0,0)==0);
+    assert(avatar_motor_caps_v1(avatar,-1,43)==-2);
+    assert(avatar_step(avatar,-1,0,0)==0);
+    assert(avatar_get_state(avatar,&state)==0 && fabs(state.velocity[0]-2.4)<1e-8);
+    assert(avatar_camera_classic_v1(avatar,0.3)==0);
+    assert(avatar_camera_active_v1(avatar,1)==0);
+    assert(avatar_camera_distance_v1(avatar,0.297)==0);
+    assert(avatar_camera_advance_v1(avatar,1,-1)==0);
+    assert(avatar_camera_pose_v1(avatar,focus,eye,-1,&camera)==0);
+    assert(camera.first_person && fabs(camera.actual_distance-0.15)<1e-8);
+    assert(avatar_camera_zoom_v1(avatar,1)==0);
+    assert(avatar_camera_advance_v1(avatar,1,-1)==0);
+    assert(avatar_camera_pose_v1(avatar,focus,eye,-1,&camera)==0);
+    assert(!camera.first_person && fabs(camera.requested_distance-0.525)<1e-8);
+    assert(avatar_camera_advance_v1(avatar,0.1,0.1)==0);
+    assert(avatar_camera_pose_v1(avatar,focus,eye,-1,&camera)==0 && camera.actual_distance<=0.1);
     assert(avatar_destroy(avatar)==0);
     avatar=avatar_create(0,0,1);
     AvatarBoundsV1 player={{20,20,20},{21,21,21}}, bounds;

@@ -40,6 +40,8 @@ This is the current offline backlog, not a promise that every possible future fe
 - [ ] Verify normal runtime playback and foot contact; edit-mode evaluation is not a gameplay test.
 - [ ] Validate target axis alignments, rig deformation and feet placement visually.
 - [ ] Capture movement traces to calibrate walking, braking, air control and jumps.
+- [x] Capture server-owned native movement and default PlayerModule camera traces; fit selected flat movement and zoom transitions through Rust C transport.
+- [ ] Complete jump-state/landing/airborne/terrain parity; the measured flat fit is only a subset.
 - [ ] Export a test user avatar and check supported textures/accessories with the local package validator.
 
 ## Needs Windows or remote CI, but not BeamNG

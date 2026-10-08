@@ -34,6 +34,18 @@ typedef struct {
 int32_t avatar_camera_active_v1(uint64_t handle, uint32_t active);
 int32_t avatar_camera_look_v1(uint64_t handle, double yaw_delta, double pitch_delta);
 int32_t avatar_camera_zoom_v1(uint64_t handle, double wheel_steps);
+/* Opt-in measured Classic preset; legacy defaults and struct layouts unchanged. */
+int32_t avatar_camera_classic_v1(uint64_t handle, double metres_per_stud);
+int32_t avatar_camera_distance_v1(uint64_t handle, double metres);
+/* Advance once per frame; safe_distance includes host clearance, -1 is clear. */
+int32_t avatar_camera_advance_v1(uint64_t handle, double dt, double safe_distance);
+/* Response in Hz, [0,240]; zero restores constant acceleration. */
+int32_t avatar_motor_response_v1(uint64_t handle, double rate);
+/* Update host-selected material caps in m/s² without resetting the character. */
+int32_t avatar_motor_caps_v1(uint64_t handle, double ground, double air);
+/* Recorded R6 flat Plastic fit; pair with motor_response=150. Capsule/mass
+   remain project values. Other materials need host-selected acceleration caps. */
+int32_t avatar_studio_r6_profile_v1(AvatarProfileV1 *out);
 /* obstruction=-1 means clear; otherwise safe boom fraction [0,1]. */
 int32_t avatar_camera_pose_v1(uint64_t handle, const double focus[3], const double eye[3],
     double obstruction, AvatarCameraPoseV1 *out);

@@ -83,6 +83,19 @@ impl Default for Profile {
         }
     }
 }
+impl Profile {
+    /// Flat R6 reference fit, Studio 0.741.19.7411056. Use motor response 150 Hz.
+    /// Ground cap is the recorded default Plastic surface, not all materials.
+    /// Capsule geometry and SI mass remain project choices. The launch offset
+    /// compensates this solver's first gravity step; it is not a JumpPower factor.
+    pub fn studio_r6_reference() -> Self {
+        let mut p = Self::default();
+        p.ground_acceleration = 741.636 * p.metres_per_stud;
+        p.air_acceleration = 143.0 * p.metres_per_stud;
+        p.jump_speed = 50.0 * 1.06 * p.metres_per_stud + p.gravity * DT;
+        p
+    }
+}
 
 /// One supporting half-space: dot(normal, centre) >= offset + radius + abs(normal.z) * (height/2 - radius).
 /// Supply all relevant planes before stepping. IDs must uniquely and stably
@@ -128,6 +141,7 @@ pub struct Character {
     state: State,
     contacts: Vec<Contact>,
     jump_held: bool,
+    motor_response: f64,
 }
 impl Character {
     pub fn new(profile: Profile, position: Vec3) -> Result<Self, &'static str> {
@@ -167,10 +181,29 @@ impl Character {
             },
             contacts: Vec::new(),
             jump_held: false,
+            motor_response: 0.0,
         })
     }
     pub fn state(&self) -> State {
         self.state
+    }
+    /// Zero preserves the original constant-acceleration motor. A positive rate
+    /// requests capped velocity feedback in Hz; profile caps remain host tuning.
+    pub fn set_motor_response(&mut self, rate: f64) -> Result<(), &'static str> {
+        if !rate.is_finite() || !(0.0..=1.0 / DT).contains(&rate) {
+            return Err("invalid motor response");
+        }
+        self.motor_response = rate;
+        Ok(())
+    }
+    /// Host-selected surface caps, in m/s², updated without resetting motion.
+    pub fn set_motor_caps(&mut self, ground: f64, air: f64) -> Result<(), &'static str> {
+        if [ground, air].iter().any(|v| !v.is_finite() || *v < 0.0) {
+            return Err("invalid motor caps");
+        }
+        self.profile.ground_acceleration = ground;
+        self.profile.air_acceleration = air;
+        Ok(())
     }
     /// Validate before mutation. Normal must be unit length; duplicate IDs rejected.
     pub fn step(&mut self, input: Input, planes: &[Plane]) -> Result<State, &'static str> {
@@ -213,12 +246,17 @@ impl Character {
         } * DT;
         if d > 0.0 {
             for i in 0..2 {
-                velocity[i] += delta[i] * (limit / d).min(1.0);
+                let response = if self.motor_response > 0.0 {
+                    self.motor_response * DT
+                } else {
+                    1.0
+                };
+                velocity[i] += delta[i] * (limit / d).min(response);
             }
         }
         // Coulomb impulse for passive support: gravity supplies the estimated
         // normal impulse. This is a controller pre-step, not AVBD friction rows.
-        if supported && !jump && input.movement == [0.0; 2] {
+        if self.motor_response == 0.0 && supported && !jump && input.movement == [0.0; 2] {
             if let Some(plane) = planes
                 .iter()
                 .filter(|plane| {

@@ -18,6 +18,10 @@ The offline foundation below is implemented. Gameplay milestones remain pending;
 - [x] Add configurable walking/jumping, offline numerical checks and a trajectory example.
 - [x] Add a Studio motion capture script (runtime verification pending).
 - [ ] Collect current R6 movement traces and calibrate acceleration, braking and air control.
+- [x] Capture native R6 walking/material/reversal/jump/turn/support and camera references in macOS Studio.
+- [x] Add opt-in capped velocity feedback and compare flat-ground movement against independent reference captures.
+- [x] Add opt-in measured camera spring, curved wheel zoom and C transport with recorded zoom comparisons.
+- [ ] Resolve high-speed timing, all jump modes, airborne input latency and landing parity; flat-fit results are not full terrain/physics parity.
 - [x] Add upright capsule clearance and exact infinite-plane sweep queries.
 - [x] Add an offline corridor/ceiling obstacle course with clearance assertions.
 - [x] Add finite triangle face/edge/vertex queries and conservative capsule sweeps.
@@ -232,3 +236,12 @@ it is a reference harness, not a port of the Rust runtime into Studio.
 - [x] Preserve the downloaded Doomspire sword server source; adapt lab activation and play classic slash/lunge clips.
 - [x] Port source sword timing, contact filtering, grip and lift requests to Rust; expose velocity-aligned projectile render frames.
 - [ ] Apply Rust sword outputs and projectile render frames in native host adapters; validate contacts, animation and forces in BeamNG.
+
+## Native reference calibration — 6 October 2026
+
+See [measured results, reproduction and opt-in APIs](docs/NATIVE_CALIBRATION.md).
+The existing lab replaces PlayerModule; a separate blank place was used for
+native camera tests. All temporary runtime fixtures were cleaned and play stopped.
+The complete offline suite passes, including recorded motion/camera regressions,
+Mac C ABI layout checks and the 271 saved animation comparisons. Native game
+integration and unmeasured controller behavior remain unchecked.

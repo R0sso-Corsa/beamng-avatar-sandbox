@@ -15,6 +15,7 @@ if __name__=='__main__':
  parser.add_argument('--private-assets',action='store_true');args=parser.parse_args()
  run('cargo','test','--manifest-path','physics/Cargo.toml')
  run('cargo','build','--release','--manifest-path','physics/Cargo.toml')
+ run(sys.executable,'tests/native_reference_smoke.py')
  for name in ['avatar_catalogue','avatar_package','camera','diagnostics','driver','model','placement','telemetry']:
   run(sys.executable,f'tests/{name}_smoke.py')
  run(sys.executable,'-c','from lupa import LuaRuntime; LuaRuntime().execute(open("tests/smoke.lua").read())')
